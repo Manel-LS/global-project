@@ -23,19 +23,7 @@ class HomeController extends AbstractController
     public function __construct(DynamicEntityManagerService $dynamicEntityManagerService)
     {
         $this->dynamicEntityManagerService = $dynamicEntityManagerService;
-    }
-
-    #[Route('/data', name: 'dynamic_data')]
-    public function dynamicData(): Response
-    {
-        $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
-        
-        // Exemple : récupérer des données
-        $data = $entityManager->getRepository(Lbcc::class)->findAll();
-dd($data);
-        return $this->json($data);
-    }
-     
+    } 
     #[Route('/', name: 'app_home')]
     public function index(): Response
     {
