@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Entity\Dynamic;
 
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -14,7 +13,6 @@ class Client
     #[ORM\Id]
     #[ORM\Column]
     private ?string $code = null;
-
 
     #[ORM\Column(length: 50)]
     private ?string $libelle = null;

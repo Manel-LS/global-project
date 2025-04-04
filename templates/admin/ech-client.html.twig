@@ -1,0 +1,446 @@
+{% extends 'base.html.twig' %}
+{% block content %}
+<style>
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+ 
+    }
+    .row-container {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    fieldset {
+        flex: 1;
+        padding: 15px;
+        border: 1px solid #ccc;
+        min-width: 250px;
+        border-radius: 5px;
+    }
+    .wide-fieldset {
+        flex: 2;
+    }
+    .form-group-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .form-group-row label {
+        min-width: 80px;
+        margin-bottom: 0;
+    }
+    .form-group-row input, 
+    .form-group-row select {
+        flex: 1;
+    }
+    .client-fields {
+        display: flex;
+        gap: 20px;
+        width: 100%;
+    }
+    .client-field-code {
+        flex: 0 0 26%;
+        max-width: 26%;
+    }
+    .client-field-libelle {
+        flex: 1;
+    }
+    /* Nouveau style pour le bouton */
+    .btn-center-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    .btn-validate {
+        padding: 5px 20px;
+        margin: 15px 0;
+    }
+    .radio-group-horizontal {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    .radio-group-horizontal label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 0;
+    }
+    /* Styles pour le tableau de résultats */
+    .result-table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
+    .result-table th {
+        background-color: #f8f9fa;
+        padding: 10px;
+        text-align: left;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .result-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .result-table tr:hover {
+        background-color: #f1f1f1;
+    }
+    .btn-center-container {
+    margin: auto;
+    /* width: 24%; */
+}.loading-spinner {
+        display: none;
+        text-align: center;
+        margin: 20px 0;
+    }
+    .error-message {
+        color: red;
+        margin: 10px 0;
+    }
+</style>
+
+
+               <div class="container-fluid">
+                  <div class="row column_title">
+                     <div class="col-md-12">
+                        <div class="page_title"></div>
+                     </div>
+                  </div>
+
+                  <div class="col-md-12">
+                     <div class="card shadow-sm">
+                        <div class="card-header text-white">
+                            <h5 class="mb-0">Échéancier Clients</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="paymentForm" method="post">
+                                <div class="form-container">
+                                    
+                                    <div class="row-container">
+                                        <fieldset>
+                                            <legend>Choix</legend>
+                                            <div class="checkbox-group">
+                                                <label><input type="checkbox" name="chkChq" value="1"> Chèque</label>
+                                                <label><input type="checkbox" name="chkEff" value="1"> Effet</label>
+                                            </div>
+                                        </fieldset>
+
+                                        <fieldset class="wide-fieldset">
+                                            <legend>Échéance</legend>
+                                            <div class="form-group-row">
+                                                <label>Du :</label>
+                                                <input type="date" class="form-control" name="td1" required>
+                                            </div>
+                                            <div class="form-group-row">
+                                                <label>Au :</label>
+                                                <input type="date" class="form-control" name="td2" required>
+                                            </div>
+                                        </fieldset>
+
+                                        <fieldset>
+                                            <legend>Encaissement</legend>
+                                            <div class="radio-group">
+                                                <label><input type="radio" name="encaissement" value="non_encaisser"> Non encaissé</label>
+                                                <label><input type="radio" name="encaissement" value="encaisser"> Encaissé</label>
+                                                <label><input type="radio" name="encaissement" value="tous" checked> Tous</label>
+                                            </div>
+                                            <div class="checkbox-group">
+                                                <label><input type="checkbox" name="piece_caisse" value="1"> Pièce en caisse</label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+
+                                    <div class="row-container">
+                                             <fieldset>
+                                            <legend>État</legend>
+                                            <div class="radio-group-horizontal">
+                                                <label><input type="radio" name="etat" value="standard" checked> Standard</label>
+                                                <label><input type="radio" name="etat" value="journaliere"> Journalière Détaillée</label>
+                                            </div>
+                                        </fieldset>
+
+                                        <fieldset>
+                                            <legend>Base</legend>
+                                            <div class="radio-group-horizontal">
+                                                <label><input type="radio" name="base" value="facture" checked> Facture</label>
+                                                <label><input type="radio" name="base" value="bs"> BS</label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+
+                                    <div class="row-container">
+                                        <fieldset >
+                                            <legend>Client</legend>
+                                            <div class="client-fields">
+                                                <div class="client-field-code">
+                                                    <div class="form-group-row">
+                                                        <label>Code :</label>
+                                                        <select id="codetrs" name="codetrs" class="form-control select2">
+                                                            <option value="">Sélectionner un code</option>
+                                                            {% for client in clients %}
+                                                                <option value="{{ client.code }}">{{ client.code }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="client-field-libelle">
+                                                    <div class="form-group-row">
+                                                        <label>Libellé :</label>
+                                                        <select  id="libtrs" name="libtrs"  class="form-control select2">
+                                                            <option value="">Sélectionner un libellé</option>
+                                                            {% for client in clients %}
+                                                                <option value="{{ client.libelle }}">{{ client.libelle }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                          
+                                <div class="btn-center-container">
+                                    <button type="submit" class="btn btn-primary btn-validate">Valider</button>
+                                </div>
+                            </form>
+                            <div id="resultsContainer" class="table-responsive">
+                                <!-- Les résultats seront affichés ici via AJAX -->
+                            </div>
+                         
+
+                          
+                        </div>
+                           <div class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+
+                            <div class="error-message"></div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+
+   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+    $('#libtrs, #codetrs').select2({ placeholder: "Choisir un client" });
+
+    var clients = {
+        {% for client in clients %}
+            "{{ client.code }}" : "{{ client.libelle }}",
+        {% endfor %}
+    };
+
+    let isChanging = false;
+
+    $('#codetrs').change(function () {
+        if (isChanging) return;
+        isChanging = true;
+
+        const selectedCode = $(this).val();
+        $('#libtrs').val(clients[selectedCode]).trigger('change');
+
+        isChanging = false;
+    });
+
+    $('#libtrs').change(function () {
+        if (isChanging) return;
+        isChanging = true;
+
+        const selectedName = $(this).val();
+        for (var code in clients) {
+            if (clients[code] === selectedName) {
+                $('#codetrs').val(code).trigger('change');
+                break;
+            }
+        }
+
+        isChanging = false;
+    });
+        $('.select2').select2();
+
+        $('#paymentForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            $('.loading-spinner').show();
+            $('.error-message').empty().hide();
+            $('#resultsContainer').empty();
+
+            var formData = $(this).serialize();
+            var isJournalier = $('input[name="etat"]:checked').val() === 'journaliere';
+
+            $.ajax({
+                url: '{{ path("process_payment") }}',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    $('.loading-spinner').hide();
+                    
+                    if (response.success) {
+                        var html = `
+                            <table id="tableInovices" class="table table-bordered table-hover display dataTable no-footer">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Raison Sociale</th>
+                                        <th>Banque</th>
+                                        <th>Num Chèque</th>
+                                        <th>Échéance</th>
+                                        <th>Type</th>
+                                        <th>Montant</th>
+                                        <th>Bord</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                        
+                        var totalGeneral = 0;
+                        var groupedData = {};
+                        
+                        // Grouper les données si mode journalier
+                        if (isJournalier) {
+                            response.results.forEach(function(result) {
+                                var dateKey = result.echeance || 'Sans date';
+                                if (!groupedData[dateKey]) {
+                                    groupedData[dateKey] = [];
+                                }
+                                groupedData[dateKey].push(result);
+                            });
+                            
+                            // Trier les groupes par date
+                            var sortedDates = Object.keys(groupedData).sort();
+                            
+                            sortedDates.forEach(function(dateKey) {
+                                var groupTotal = 0;
+                                var groupItems = groupedData[dateKey];
+                                
+                                // En-tête du groupe
+                                html += `
+                                    <tr class="group-header bg-primary text-white">
+                                            <td colspan="8"><strong>Date: ${formatDate(dateKey)}</strong></td>
+
+                                    </tr>`;
+                                
+                                // Items du groupe
+                                groupItems.forEach(function(result) {
+                                    var montant = parseFloat(result.montant) || 0;
+                                    totalGeneral += montant;
+                                    groupTotal += montant;
+                                    
+                                    html += `
+                                        <tr>
+                                            <td>${result.codetrs || ''}</td>
+                                            <td>${result.libtrs || ''}</td>
+                                            <td>${result.banquecli || ''}</td>
+                                            <td>${result.numcheque || ''}</td>
+                                            <td>${result.echeance ? formatDate(result.echeance) : ''}</td>
+                                            <td>${result.typeregl || ''}</td>
+                                            <td class="text-right">${montant.toFixed(3).replace('.', ',')}</td>
+                                            <td class="text-center">${(result.numbord === '' || result.numbord === null) ? 'N' : 'O'}</td>
+                                        </tr>`;
+                                });
+                                
+                                // Sous-total du groupe
+                                html += `
+                                    <tr class="subtotal-row bg-light">
+                                        <td colspan="6" class="text-right font-weight-bold">Sous-total:</td>
+                                        <td colspan="2"class="text-right font-weight-bold">${groupTotal.toFixed(3).replace('.', ',')}</td>
+                                     </tr>`;
+                            });
+                        } else {
+                            // Mode standard sans regroupement
+                            response.results.forEach(function(result) {
+                                var montant = parseFloat(result.montant) || 0;
+                                totalGeneral += montant;
+                                
+                                html += `
+                                    <tr>
+                                        <td>${result.codetrs || ''}</td>
+                                        <td>${result.libtrs || ''}</td>
+                                        <td>${result.banquecli || ''}</td>
+                                        <td>${result.numcheque || ''}</td>
+                                        <td>${result.echeance ? formatDate(result.echeance) : ''}</td>
+                                        <td>${result.typeregl || ''}</td>
+                                        <td class="text-right">${montant.toFixed(3).replace('.', ',')}</td>
+                                        <td class="text-center">${(result.numbord === '' || result.numbord === null) ? 'N' : 'O'}</td>
+                                    </tr>`;
+                            });
+                        }
+                        
+                        // Total général
+                        html += `
+                                <tr class="total-row bg-info text-white">
+                                    <td colspan="6" class="text-right font-weight-bold">Total général:</td>
+                                    <td class="text-right font-weight-bold">${totalGeneral.toFixed(3).replace('.', ',')}</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>`;
+                        
+                        $('#resultsContainer').html(html);
+                        
+                        // Initialisation de DataTable
+                        var table = $('#tableInovices').DataTable({
+                            "language": {
+                                "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json"
+                            },
+                            "order": [[4, "asc"]], // Tri par échéance par défaut
+                            "paging": false, // Désactive la pagination
+                            "searching": true, // Active la recherche
+                            "info": false // Masque le texte d'information
+                        });
+                        
+                        // Si mode journalier, ajouter le regroupement
+                        if (isJournalier) {
+                            table.rowGroup({
+                                dataSrc: 4, // Colonne de date d'échéance
+                                startRender: function(rows, group) {
+                                    return $('<tr class="group-header bg-primary text-white"/>')
+                                        .append('<td colspan="7">Date d\'échéance: ' + formatDate(group) + '</td>')
+                                        .append('<td></td>');
+                                },
+                                endRender: function(rows, group) {
+                                    var groupTotal = rows.data().pluck(6).reduce(function(a, b) {
+                                        return a + parseFloat(b.replace(',', '.')) || 0;
+                                    }, 0);
+                                    
+                                    return $('<tr class="subtotal-row bg-light"/>')
+                                        .append('<td colspan="6" class="text-right font-weight-bold">Sous-total:</td>')
+                                        .append('<td colspan="1" class="text-right font-weight-bold">' + groupTotal.toFixed(3).replace('.', ',') + '</td>')
+                                        .append('<td></td>');
+                                }
+                            }).draw();
+                        }
+                    } else {
+                        $('.error-message').text(response.message || 'Une erreur est survenue').show();
+                    }
+                },
+                error: function(xhr) {
+                    $('.loading-spinner').hide();
+                    try {
+                        var jsonResponse = JSON.parse(xhr.responseText);
+                        $('.error-message').text(jsonResponse.message || 'Erreur lors de la requête').show();
+                    } catch (e) {
+                        $('.error-message').text('Erreur lors de la requête: ' + xhr.statusText).show();
+                    }
+                }
+            });
+        });
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Sans date';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR');
+        }
+    });
+</script>
+{% endblock %}
