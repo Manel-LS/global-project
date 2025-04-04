@@ -9,7 +9,6 @@ use DateTime;
 class SoldeAuClientService
 {
     private $dynamicEntityManagerService;
-
     public function __construct(DynamicEntityManagerService $dynamicEntityManagerService)
     {
         $this->dynamicEntityManagerService = $dynamicEntityManagerService;

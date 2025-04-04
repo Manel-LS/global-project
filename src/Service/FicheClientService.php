@@ -532,7 +532,6 @@ class FicheClientService
         $reqRegl = "";
         $session = $this->requestStack->getSession();
         $codeSoc = $session->get('database_choice');
-
         if ($baseF === "E") {
             $reqRegl = " AND baseregl = 'B'";
         } elseif ($baseF === "F") {
@@ -553,7 +552,6 @@ class FicheClientService
             'startDate' => $startDate,
             'endDate' => $endDate
         ];
-
         if ($typeFiche === "Date") {
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'TIND', nummvt, :codetrs, :codeUser, :societe 
@@ -566,7 +564,6 @@ class FicheClientService
                     FROM $codeSoc.reglement AS e 
                     WHERE fichecli='1' AND garantie = 0 AND (typeregl <> 'Chèque' AND typeregl <> 'Effet') AND $requete $reqRegl";
             $connection->executeStatement($sql, $commonParams);
-
             $requeteEch = str_replace("datemvt", "echeance", $requete);
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'TIND', nummvt, :codetrs, :codeUser, :societe 
@@ -579,7 +576,6 @@ class FicheClientService
                     FROM $codeSoc.reglement AS e 
                     WHERE fichecli='1' AND garantie = 0 AND (typeregl <> 'Chèque' AND typeregl <> 'Effet') AND $requete $reqRegl";
             $connection->executeStatement($sql, $commonParams);
-
             $requeteEnc = str_replace("datemvt", "dateenc", $requete);
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'TIND', nummvt, :codetrs, :codeUser, :societe 
@@ -587,7 +583,6 @@ class FicheClientService
                     WHERE fichecli='1' AND garantie = 0 AND (typeregl = 'Chèque' OR typeregl = 'Effet') AND $requeteEnc $reqRegl";
             $connection->executeStatement($sql, $commonParams);
         }
-
         if ($debours === "1") {
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'TIND', nummvt, :codetrs, :codeUser, :societe 
@@ -595,39 +590,33 @@ class FicheClientService
                     WHERE ROUND(resteventiler, 3) > 0 AND $requete";
             $connection->executeStatement($sql, $commonParams);
         }
-
         $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                 SELECT 'TIND', nummvt, :codetrs, :codeUser, :societe 
                 FROM $codeSoc.impclient AS e 
                 WHERE 1=1 AND $requete";
         $connection->executeStatement($sql, $commonParams);
-
         $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                 SELECT 'TIND', nummvt, :codetrs, :codeUser, :societe 
                 FROM $codeSoc.impcaisse AS e 
                 WHERE 1=1 AND $requete";
         $connection->executeStatement($sql, $commonParams);
-
         $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                 SELECT 'TIND', nummvt, :codetrs, :codeUser, :societe 
                 FROM $codeSoc.modifregl AS e 
                 WHERE 1=1 AND $requete";
         $connection->executeStatement($sql, $commonParams);
-
         $ses = "pieceliee, nummvt, datemvt, codetrs, codeart, desart, qteart, puttc, mttotal, temps, codeuser, societe";
         $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                 SELECT 'FC', l.nummvt, l.datemvt, e.codetrs, l.codeart, l.desart, l.qteart, l.puttc, l.mttotal, e.temps, :codeUser, :societe 
                 FROM $codeSoc.efc AS e, $codeSoc.lfc AS l 
                 WHERE e.nummvt = l.nummvt AND $requete";
         $connection->executeStatement($sql, $commonParams);
-
         if ($baseF === "F") {
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'FA', l.nummvt, l.datemvt, e.codetrs, l.codeart, l.desart, l.qteart, l.puttc, l.mttotal, e.temps, :codeUser, :societe 
                     FROM $codeSoc.efactv AS e, $codeSoc.lfactv AS l 
                     WHERE e.typefact = 'FA' AND e.nummvt = l.nummvt AND $requete";
             $connection->executeStatement($sql, $commonParams);
-
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'AV', l.nummvt, l.datemvt, e.codetrs, l.codeart, l.desart, l.qteart, l.puttc, l.mttotal, e.temps, :codeUser, :societe 
                     FROM $codeSoc.efactv AS e, $codeSoc.lfactv AS l 
@@ -635,40 +624,34 @@ class FicheClientService
             $connection->executeStatement($sql, $commonParams);
         } elseif ($baseF === "E") {
             $gestionBS = $PARAM->getGestionbs();
-
             if ($gestionBS === "0") {
                 $sql = "INSERT INTO baseimpr.lmvt (pieceliee, nummvt, codetrs, datemvt, codeart, desart, qteart, puttc, mttotal, temps, codeuser, societe) 
                         SELECT 'BS', l.nummvt, l.datemvt, e.codetrs, l.codeart, l.desart, l.qteart, l.puttc, l.mttotal, e.temps, :codeUser, :societe 
                         FROM $codeSoc.ebs AS e, $codeSoc.lbs AS l 
                         WHERE e.nummvt = l.nummvt AND $requete";
                 $connection->executeStatement($sql, $commonParams);
-
                 $sql = "INSERT INTO tmpmvtcaisse (nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera) 
                         SELECT 'RS', nummvt, datemvt, CONCAT('RS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
                         FROM $codeSoc.ebrs AS e 
                         WHERE codefact <> 'A' AND $requete";
                 $connection->executeStatement($sql, ['codeUser' => $codeUser] + $commonParams);
             }
-
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'BL', l.nummvt, l.datemvt, e.codetrs, l.codeart, l.desart, l.qteart, l.puttc, l.mttotal, e.temps, :codeUser, :societe 
                     FROM $codeSoc.ebl AS e, $codeSoc.lbl AS l 
                     WHERE e.nummvt = l.nummvt AND $requete";
             $connection->executeStatement($sql, $commonParams);
-
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'BR', l.nummvt, l.datemvt, e.codetrs, l.codeart, l.desart, l.qteart, l.puttc, l.mttotal, e.temps, :codeUser, :societe 
                     FROM $codeSoc.ebrc AS e, $codeSoc.lbrc AS l 
                     WHERE e.nummvt = l.nummvt AND $requete";
             $connection->executeStatement($sql, $commonParams);
-
             // Tickets
             $sql = "INSERT INTO baseimpr.lmvt ($ses) 
                     SELECT 'TC', l.nummvt, l.datemvt, e.codetrs, l.codeart, l.desart, l.qteart, l.puttc, l.mttotal, e.temps, :codeUser, :societe 
                     FROM $codeSoc.etick AS e, $codeSoc.ltick AS l 
                     WHERE e.nummvt = l.nummvt AND $requete";
             $connection->executeStatement($sql, $commonParams);
-
             // Tickets par caisse
             $caisses = $connection->fetchAllAssociative("SELECT code FROM $codeSoc.caisse WHERE typecaisse = 'CV' ORDER BY code");
             foreach ($caisses as $caisse) {
@@ -685,7 +668,6 @@ class FicheClientService
                     FROM $codeSoc.ebs AS e, $codeSoc.lbs AS l 
                     WHERE e.nummvt = l.nummvt AND $requete";
             $connection->executeStatement($sql, $commonParams);
-
             $sql = "INSERT INTO tmpmvtcaisse (nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera) 
                     SELECT 'RS', nummvt, datemvt, CONCAT('RS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
                     FROM $codeSoc.ebrs AS e 
