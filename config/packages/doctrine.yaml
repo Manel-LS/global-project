@@ -1,0 +1,47 @@
+doctrine:
+    dbal:
+        default_connection: global
+        connections:
+            global:
+                url: '%env(resolve:DATABASE_URL)%'
+                driver: 'pdo_mysql'
+                charset: utf8mb4
+    orm:
+        auto_generate_proxy_classes: true
+        default_entity_manager: global
+        entity_managers:
+            global:
+                connection: global
+                mappings:
+                    App:
+                        is_bundle: false
+                        type: attribute
+                        dir: '%kernel.project_dir%/src/Entity/Global'
+                        prefix: 'App\Entity\'
+                        alias: app
+
+
+when@test:
+    doctrine:
+        dbal:
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            auto_generate_proxy_classes: false
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

@@ -1,0 +1,150 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block body %}
+<body class="inner_page login">
+    <div class="full_container">
+       <div class="container">
+          <div class="center verticle_center full_height">
+             <div class="login_section">
+                <div class="logo_login">
+                   <div class="center">
+                      <img width="210" src="{{ asset('images/logo/logo.png') }}" alt="Logo" />
+                   </div>
+                </div>
+                <div class="login_form">
+                  <form action="{{ path('register') }}" method="post">
+                     {{ form_start(form) }}
+                     {{ form_errors(form) }}
+                      <fieldset>
+                         <div class="field">
+                           {{ form_label(form.libelle) }}
+                           {{ form_widget(form.libelle, {'attr': {'class': 'form-control'}}) }}
+                           {{ form_errors(form.libelle) }}
+                         </div>
+
+                         <div class="field">
+                            {{ form_label(form.login) }}
+                            {{ form_widget(form.login, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.login) }}
+                         </div>
+
+                         <div class="field">
+                            {{ form_label(form.code) }}
+                            {{ form_widget(form.code, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.code) }}
+                         </div>
+
+                         <div class="field">
+                           {{ form_label(form.motpasse) }}
+                           {{ form_widget(form.motpasse, {'attr': {'class': 'form-control', 'id': 'motpasse'}}) }}
+                           {{ form_errors(form.motpasse) }}
+
+                           <div id="password-requirements" style="display: none; color: red; margin-top: 5px;">
+                               <p id="min-length" style="display: none;">✅ Minimum 8 caractères</p>
+                               <p id="uppercase" style="display: none;">✅ Une lettre majuscule</p>
+                               <p id="number" style="display: none;">✅ Un chiffre</p>
+                           </div>
+                         </div>
+
+                         <div class="field">
+                           {{ form_label(form.confirmmotpasse) }}
+                           {{ form_widget(form.confirmmotpasse, {'attr': {'class': 'form-control', 'id': 'confirmmotpasse'}}) }}
+                           {{ form_errors(form.confirmmotpasse) }}
+                           <div id="error-message" style="color: red; display: none; margin-top: 5px;">⚠️ Les mots de passe ne correspondent pas.</div>
+                         </div>
+
+                         <div class="field">
+                            <label class="form-check-label">
+                                <span>Vous avez déjà un compte ? <a href="{{path('app_login')}}">Connectez-vous
+                                </a></span>
+                            </label>
+                        </div>
+                        
+
+                         <div class="field margin_0">
+                           <label class="label_field hidden">hidden label</label>
+                           <button class="main_bt" id="submitBtn"  href="#" >S'inscrire</button>
+                        </div>
+                      </fieldset>
+                      {{ form_end(form) }}
+                   </form>
+                </div>
+             </div>
+          </div>
+       </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const passwordField = document.getElementById('motpasse');
+            const confirmPasswordField = document.getElementById('confirmmotpasse');
+            const passwordRequirements = document.getElementById('password-requirements');
+            const errorMessage = document.getElementById('error-message');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            const minLength = document.getElementById('min-length');
+            const uppercase = document.getElementById('uppercase');
+            const number = document.getElementById('number');
+
+            // Fonction pour valider les critères de mot de passe
+            function validatePassword() {
+                const password = passwordField.value;
+                const confirmPassword = confirmPasswordField.value;
+                
+                let isValid = true;
+
+                // Vérification des critères du mot de passe
+                if (password.length >= 8) {
+                    minLength.style.display = 'block';
+                } else {
+                    minLength.style.display = 'none';
+                    isValid = false;
+                }
+
+                if (/[A-Z]/.test(password)) {
+                    uppercase.style.display = 'block';
+                } else {
+                    uppercase.style.display = 'none';
+                    isValid = false;
+                }
+
+                if (/\d/.test(password)) {
+                    number.style.display = 'block';
+                } else {
+                    number.style.display = 'none';
+                    isValid = false;
+                }
+
+                // Affichage des critères dès que l'utilisateur commence à taper
+                if (password.length > 0) {
+                    passwordRequirements.style.display = 'block';
+                } else {
+                    passwordRequirements.style.display = 'none';
+                }
+
+                // Vérification de la correspondance des mots de passe
+                if (password !== confirmPassword) {
+                    errorMessage.style.display = 'block';
+                    isValid = false;
+                } else {
+                    errorMessage.style.display = 'none';
+                }
+
+                // Activation du bouton d'inscription si tout est valide
+                submitBtn.disabled = !isValid;
+            }
+
+            // Afficher les critères de mot de passe lorsque l'utilisateur commence à taper
+            passwordField.addEventListener('input', function() {
+                validatePassword();
+            });
+
+            confirmPasswordField.addEventListener('input', function() {
+                validatePassword();
+            });
+        });
+    </script>
+</body>
+{% endblock %}

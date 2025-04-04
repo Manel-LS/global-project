@@ -1,0 +1,45 @@
+<div class="topbar">
+    <nav class="navbar navbar-expand-lg navbar-light">
+       <div class="full">
+          <button type="button" id="sidebarCollapse" class="sidebar_toggle"><i class="fa fa-bars"></i></button>
+           
+          <div class="right_topbar">
+             <div class="icon_info">
+              
+                <ul class="user_profile_dd">
+                   <li>
+                      <a class="dropdown-toggle" data-toggle="dropdown">
+                        
+                        {% if app.user %}
+                                                <img class="img-responsive rounded-circle" src="https://ui-avatars.com/api/?name={{ app.user.libelle }}" alt="Avatar" />
+
+                        <span class="name_user">{{ app.user.libelle }}</span></a>
+                       {% else %} <p>Aucun utilisateur connecté</p>
+                        {% endif %}
+                      <div class="dropdown-menu">
+
+                         <a class="dropdown-item" href="{{path('app_logout')}}"><span>Log Out</span> <i class="fa fa-sign-out"></i></a>
+                      </div>
+                   </li>
+                </ul>
+             </div>
+          </div>
+       </div>
+       <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const compteurElement = document.getElementById('cart-count');
+
+ 
+        });
+
+        function updateCartCount(count) {
+            localStorage.setItem('cart-count', count);
+            const compteurElement = document.getElementById('cart-count');
+            if (compteurElement) {
+                compteurElement.textContent = count;
+            }
+        }
+
+    </script>
+    </nav>
+ </div>

@@ -1,0 +1,25 @@
+# config/services.yaml
+
+parameters:
+    # Placez ici les paramètres qui ne changent pas d'une machine à l'autre (facultatif)
+    # Exemple: 'app.some_parameter': 'value'
+
+services:
+    App\Service\DynamicEntityManagerService:
+        arguments:
+            $requestStack: '@request_stack'
+
+    _defaults:
+        autowire: true      # Injection automatique des dépendances
+        autoconfigure: true # Enregistrement automatique des services comme commandes, abonnés aux événements, etc.
+
+    # Ajoute les classes dans src/ comme services
+    # Cela crée un service par classe dont l'id est le nom de la classe complète
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    # Vous pouvez ajouter d'autres définitions de services si nécessaire.

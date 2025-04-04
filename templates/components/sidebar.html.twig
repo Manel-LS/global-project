@@ -1,0 +1,49 @@
+  <!-- Sidebar  -->
+  <nav id="sidebar">
+    <div class="sidebar_blog_1">
+       <div class="sidebar-header">
+           
+       </div>
+       <div class="sidebar_user_info">
+          <div class="icon_setting"></div>
+          <div class="user_profle_side">
+             <div class="user_img">
+<img class="img-responsive" src="https://ui-avatars.com/api/?name={{ app.user ? app.user.libelle : 'Guest' }}" alt="Avatar">
+             </div>
+             <div class="user_info">
+               {% if app.user %}
+               <h6>{{ app.user.libelle }}</h6>
+              {% else %} <p>Aucun utilisateur connecté</p>
+               {% endif %}
+                <p><span class="online_animation"></span> Online</p>
+             </div>
+          </div>
+       </div>
+    </div>
+    <div class="sidebar_blog_2">
+       <ul class="list-unstyled components">
+             {# <li class="{{ app.request.attributes.get('_route') == 'fiche_client' ? 'active' : '' }}">
+               <a href="{{ path('fiche_client') }}">
+                   <i class="fas fa-file-invoice-dollar" style="color: #6666ef;"></i>
+                   <span>Fiche Client</span>
+               </a>
+           </li>
+           <li class="{{ app.request.attributes.get('_route') == 'stock' ? 'active' : '' }}">
+               <a href="{{ path('stock') }}">
+                   <i class="fas fa-box" style="color: #6666ef;"></i>
+                   <span>Stock</span>
+               </a>
+           </li>
+            <li class="{{ app.request.attributes.get('_route') == 'ech_client' ? 'active' : '' }}">
+               <a href="{{ path('ech_client') }}">
+                  <i class="fas fa-calendar-alt" style="color: #6666ef;"></i>
+                   <span>Echéancier Clients</span>
+               </a>
+           </li> #}
+     
+          
+       
+       </ul>
+    </div>
+ </nav>
+ <!-- end sidebar -->
