@@ -1,6 +1,5 @@
 <?php
- // src/Service/DynamicEntityManagerService.php
- namespace App\Service;
+  namespace App\Service;
 
  use Doctrine\ORM\EntityManager;
  use Doctrine\ORM\EntityManagerInterface;
