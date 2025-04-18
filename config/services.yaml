@@ -1,9 +1,7 @@
 # config/services.yaml
 
 parameters:
-    # Placez ici les paramètres qui ne changent pas d'une machine à l'autre (facultatif)
-    # Exemple: 'app.some_parameter': 'value'
-
+    upload_directory: '%kernel.project_dir%/public/uploads'
 services:
     App\Service\DynamicEntityManagerService:
         arguments:

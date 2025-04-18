@@ -113,7 +113,6 @@
                                 </select>
                                 <div class="invalid-feedback">Veuillez sélectionner un nom de client</div>
                             </div>
-                            <!-- Détail Mouvement en haut à droite -->
                             <div class="col-md-4 d-flex align-items-center justify-content-end">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="detailMouvement" id="detailMouvement" value="1" style="border: 2px solid #0d6efd;">
@@ -123,7 +122,6 @@
                         </div>
                     </div>
 
-                    <!-- Section Période -->
                     <div class="col-md-12">
                         <div class="row align-items-center mb-3">
                             <div class="col-md-4 d-flex align-items-center">
@@ -313,11 +311,9 @@
 
   <script>
   $(document).ready(function() {
-    // Initialisation Select2
-    $('#libtrs, #codetrs').select2({ placeholder: "Choisir un client" });
+     $('#libtrs, #codetrs').select2({ placeholder: "Choisir un client" });
 
-    // Synchronisation des sélecteurs client
-    var clients = {
+     var clients = {
         {% for client in clients %}
             "{{ client.code }}": "{{ client.libelle }}",
         {% endfor %}
@@ -346,7 +342,6 @@
         isChanging = false;
     });
 
-    // Fonctions utilitaires
     function formatNumber(num) {
         if (num === null || num === undefined || num === '') return '0,000';
         return parseFloat(num).toFixed(3).replace('.', ',');
@@ -358,7 +353,6 @@
         return date.toLocaleDateString('fr-FR');
     }
 
-    // Soumission du formulaire
     $('#clientForm').submit(function(e) {
         e.preventDefault();
         

@@ -227,6 +227,33 @@ ul {
 }
 
 
+#datatableFc thead th, #tableInovices thead th {
+    background-color: #0b51ab;
+    color: white;
+    text-align: center;
+
+}
+.title-banner {
+    background-color: #c3c3ce;
+   padding: 4px 10px;
+   border-radius: 2px;
+   margin-bottom: 15px;
+   display: block;
+   width: 100%;
+}
+       .small-title {
+           font-size: 18px;
+           color: #6c757d;  
+           font-weight: 600;
+           margin: 0;
+           text-transform: none; 
+       }
+
+       .page_title h1 {
+           font-size: 28px;
+           font-weight: 700;
+           margin-top: 0;
+       }
 /*--
 a.btn {
     min-width: 170px;
@@ -3859,7 +3886,7 @@ h3 {
 }
 
 .center-buttons .btn-primary:hover {
-    background-color: #f57c00 !important;
+    background-color: #6666ef !important;
 }
 .custom-add-to-cart i {
     pointer-events: none;
@@ -3909,15 +3936,15 @@ h3 {
 }
 
 .dataTables_paginate .paginate_button:hover {
-    background-color: #f57c00 !important;
+    background-color: #6666ef !important;
     color: white;
-    border-color: #f57c00 !important;
+    border-color: #6666ef !important;
 }
 
 .dataTables_paginate .paginate_button.current {
-    background-color: #f57c00 !important;
+    background-color: #6666ef !important;
     color: white;
-    border-color: #f57c00 !important;
+    border-color: #6666ef !important;
 }
 
 

@@ -30,6 +30,9 @@ class Client
     private ?float $scredit = null;
     #[ORM\Column(length: 255)]
     private ?string $ctarif = null;
+    #[ORM\Column(length: 255)]
+    private ?string $coderep = null;
+    
     public function getCtarif()
     {
         return $this->ctarif;
@@ -136,6 +139,26 @@ class Client
     public function setScredit($scredit)
     {
         $this->scredit = $scredit;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of coderep
+     */ 
+    public function getCoderep()
+    {
+        return $this->coderep;
+    }
+
+    /**
+     * Set the value of coderep
+     *
+     * @return  self
+     */ 
+    public function setCoderep($coderep)
+    {
+        $this->coderep = $coderep;
 
         return $this;
     }

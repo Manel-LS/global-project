@@ -40,8 +40,69 @@
                   <i class="fas fa-calendar-alt" style="color: #6666ef;"></i>
                    <span>Echéancier Clients</span>
                </a>
-           </li>
-     
+           </li>{# Liste des routes qui doivent ouvrir ce sous-menu #}
+{% set consultationRoutes = ['get_fc', 'get_fa', 'get_bl', 'get_bs','reglement'] %}
+{% set currentRoute = app.request.attributes.get('_route') %}
+{% set isConsultationActive = currentRoute in consultationRoutes %}
+
+<li class="{{ isConsultationActive ? 'active' : '' }}">
+    <a href="#consultationSubmenu" 
+       data-toggle="collapse" 
+       aria-expanded="{{ isConsultationActive ? 'true' : 'false' }}" 
+       class="dropdown-toggle">
+        <i class="fas fa-folder-open" style="color: #6666ef;"></i>
+        <span>Consultation Pièce Client</span>
+    </a>
+
+    <ul class="collapse list-unstyled {{ isConsultationActive ? 'show' : '' }}" id="consultationSubmenu">
+        <li class="{{ currentRoute == 'get_fc' ? 'active' : '' }}">
+            <a href="{{ path('get_fc') }}">
+                <i class="fas fa-file-alt" style="color: #4caf50;"></i>
+                <span>FC</span>
+            </a>
+        </li>
+        <li class="{{ currentRoute == 'get_fa' ? 'active' : '' }}">
+            <a href="{{ path('get_fa') }}">
+                <i class="fas fa-file-invoice-dollar" style="color: #2196f3;"></i>
+                <span>FA</span>
+            </a>
+        </li>
+        <li class="{{ currentRoute == 'get_bl' ? 'active' : '' }}">
+            <a href="{{ path('get_bl') }}">
+                <i class="fas fa-file-contract" style="color: #ff9800;"></i>
+                <span>BL</span>
+            </a>
+        </li>
+        <li class="{{ currentRoute == 'get_bs' ? 'active' : '' }}">
+            <a href="{{ path('get_bs') }}">
+                <i class="fas fa-file-signature" style="color: #9c27b0;"></i>
+                <span>BS</span>
+            </a>
+        </li>
+      <li class="{{ currentRoute == 'reglement' ? 'active' : '' }}">
+            <a href="{{ path('reglement') }}">
+                <i class="fas fa-hand-holding-usd" style="color: #ff5722;"></i> <!-- Nouvelle icône pour Règlement -->
+                <span>Règlement</span> <!-- Titre plus explicite -->
+            </a>
+        </li>
+    </ul>
+</li>
+
+         {# <li class="{{ app.request.attributes.get('_route') == 'ech_client_fa' ? 'active' : '' }}">
+            <a href="{{ path('ech_client') }}">FA</a>
+        </li>
+        <li class="{{ app.request.attributes.get('_route') == 'ech_client_bl' ? 'active' : '' }}">
+            <a href="{{ path('ech_client') }}">BL</a>
+        </li>
+        <li class="{{ app.request.attributes.get('_route') == 'ech_client_bs' ? 'active' : '' }}">
+            <a href="{{ path('ech_client') }}">BS</a>
+        </li>
+        <li class="{{ app.request.attributes.get('_route') == 'ech_client_reglement' ? 'active' : '' }}">
+            <a href="{{ path('ech_client') }}">Règlement</a>
+        </li> #}
+    </ul>
+</li>
+
           
        
        </ul>
