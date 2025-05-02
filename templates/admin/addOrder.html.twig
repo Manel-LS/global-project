@@ -1,0 +1,808 @@
+{% extends 'base.html.twig' %}
+{% set panier = app.session.get('panier', {}) %}
+{% block body %}
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestions des Commandes</title>
+
+<body class="inner_page tables_page">
+	<div class="full_container">
+		<div class="inner_container">
+			{% include 'components/sidebar.html.twig' %}
+			<div id="content">
+				{% include 'components/topbar.html.twig' %}
+				<div class="midde_cont">
+					<div class="container-fluid">
+						<div class="row column_title">
+							<div class="col-md-12">
+								<div class="page_title">
+									<h1>Gestions des commandes</h1>
+								</div>
+							</div>
+						</div>
+
+						<!-- Choisir un client -->
+						<div class="col-md-12">
+							<div class="card shadow-sm">
+								<div class="card-header text-white">
+									<h4>Choisir le client</h4>
+								</div>
+								<div class="card-body">
+									<form class="row">
+										<div id='clients-data' class="col-md-6" data-clients="{{ clientsData }}">
+											<label for="codeClient" class="fw-bold">Code client</label>
+											<select id="codetrs" name="codetrs" class="form-control" required {% if
+												panier is not empty %} disabled {% endif %}>
+												{% if panier is not empty %}
+												{% set firstArticleKey = panier|keys|first %}
+												{% if panier[firstArticleKey].client is defined %}
+												<option value="{{ panier[firstArticleKey].client }}">{{
+													panier[firstArticleKey].client }}</option>
+												{% endif %}
+												{% endif %}
+												<option value="">choisir le client</option>
+												{% for client in clients %}
+												<option value="{{ client.code }}">{{ client.code }}</option>
+												{% endfor %}
+											</select>
+										</div>
+
+										<div class="col-md-6">
+											<label class="fw-bold" for="libtrs">Nom client</label>
+											<select id="libtrs" name="libtrs" class="form-control" required {% if panier
+												is not empty %} disabled {% endif %}>
+												{% if panier is not empty %}
+												{% set firstArticleKey = panier|keys|first %}
+												{% if panier[firstArticleKey].client is defined %}
+												<option value="{{ panier[firstArticleKey].clientname }}">{{
+													panier[firstArticleKey].clientname }}
+												</option>
+												{% endif %}
+												{% endif %}
+												<option value="">choisir le client</option>
+												{% for client in clients %}
+												<option value="{{ client.libelle }}">{{ client.libelle }}</option>
+												{% endfor %}
+											</select>
+										</div>
+									</form>
+									<div id="message-container" style="color:red;margin-top:  10px;margin-left: 10px;">
+										{% if panier is not empty %}
+										Vous devez compléter le panier pour ce client avant d'effectuer des
+										modifications.
+										{% endif %}
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- Row avec Liste des catégories et Tab Bar Style 2 -->
+						<!-- Liste des catégories start -->
+						<div class="row mt-4">
+							<div class="col-md-3" id="category-container">
+								<div class="card" id="category-card">
+									<div
+										class="card-header text-white text-center d-flex justify-content-between align-items-center">
+										<h5 class="mb-0">Liste des Catégories</h5>
+
+										<button class="btn btn-sm btn-light" id="toggle-category">
+											<i class="fas fa-chevron-left"></i>
+										</button>
+									</div>
+									<div class="card-body">
+										<ul class="list-group" id="category-list"
+											data-categories="{{ categories|json_encode }}">
+											{% for categorie in categories %}
+											<li class="list-group-item list-group-item-action"
+												data-code="{{ categorie.code }}" style="cursor: pointer;">
+												{{ categorie.libelle }}
+											</li>
+											{% endfor %}
+										</ul>
+									</div>
+								</div>
+							</div>
+							<!-- Liste des catégories end -->
+
+							<!-- Tab Bar start -->
+							<div class="col-md-9">
+								<div class="card">
+									<div class="card-header text-white">
+										<h5>Ajouter la commande</h5>
+									</div>
+									<div class="card-body">
+										<div class="tab-content mt-3">
+											<div class="tab-pane fade active show" id="tab-order" role="tabpanel">
+												<div class="col">
+													<div class="card" id="table-card">
+														<div class="card-body">
+															<div class="table-responsive">
+																<table id="tableOrder" style="width:100%">
+																	<thead>
+																		<tr>
+																			<th class="text-left">Libellé</th>
+																			<th class="text-center">Qte disponible
+																			</th>
+																			<th class="text-center">Qte</th>
+																			{# <th class="text-center">Qte promotion #}
+																			</th>
+																			<th class="text-center">Prix TTC</th>
+																		</tr>
+																	</thead>
+																	<tbody id="articles-list">
+																		<td colspan="5" style="text-align:center;"
+																			id="no-products-message"></td>
+																	</tbody>
+																</table>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		var updatePanierUrl = '{{ path("update_panier") }}';
+		document.addEventListener('DOMContentLoaded', function () {
+			var clientsData = document.getElementById('clients-data').getAttribute('data-clients');
+			var clients = JSON.parse(clientsData);
+
+			initializeSelect2();
+
+			$(document).ready(function () {
+				var clientsData = document.getElementById('clients-data').getAttribute('data-clients');
+				var clients = JSON.parse(clientsData);
+				var isUpdating = false;
+
+				$('#codetrs').change(function () {
+					if (!isUpdating) {
+						isUpdating = true;
+						setTimeout(function () {
+							let selectedCode = $('#codetrs').val();
+							if (selectedCode) {
+								$('#libtrs').val(clients[selectedCode]).trigger('change');
+								checkUnpaidInvoices(selectedCode);
+							}
+							isUpdating = false;
+						}, 100);
+					}
+				});
+
+
+				$('#libtrs').change(function () {
+					if (!isUpdating) {
+						isUpdating = true;
+						var selectedName = $(this).val();
+						for (var code in clients) {
+							if (clients[code] === selectedName) {
+								$('#codetrs').val(code).trigger('change');
+								break;
+							}
+						}
+						isUpdating = false;
+					}
+				});
+
+				$('#libtrs').on('select2:selecting', function (e) {
+					$(this).select2('close');
+				});
+
+				$('#codetrs').on('select2:selecting', function (e) {
+					$(this).select2('close');
+				});
+			});
+			function initializeSelect2() {
+				$('#libtrs, #codetrs').select2({
+					placeholder: "Choisir un client"
+				});
+
+
+				var isUpdating = false;
+
+				$('#codetrs').change(function () {
+					if (!isUpdating) {
+						isUpdating = true;
+						$('#libtrs').val(clients[$(this).val()]).trigger('change');
+						isUpdating = false;
+					}
+				});
+
+				$('#libtrs').change(function () {
+					if (!isUpdating) {
+						isUpdating = true;
+						var selectedName = $(this).val();
+						for (var code in clients) {
+							if (clients[code] === selectedName) {
+								$('#codetrs').val(code).trigger('change');
+								break;
+							}
+						}
+						isUpdating = false;
+					}
+				});
+
+				$('#libtrs, #codetrs').on('select2:select', function (e) {
+					$(this).select2('close');
+				});
+			}
+
+			const categorieMenu = document.getElementById('category-list');
+			const tbody = document.getElementById('articles-list');
+			const noProductsMessage = document.getElementById('no-products-message');
+			let articlesData = [];
+			let dataTable;
+			document.getElementById('category-list').addEventListener('click', function (event) {
+				if (event.target.classList.contains('list-group-item')) {
+					const categoryCode = event.target.getAttribute('data-code');
+					const selectedClient = codetrs.value;
+					const selectedClientname = libtrs.value;
+					handleCategoryClick(categoryCode, selectedClient, 'articles');
+					setActiveMenu(event.target);
+				}
+			});
+
+			function setActiveMenu(activeItem) {
+				const items = categorieMenu.getElementsByClassName('list-group-item');
+				for (let item of items) {
+					item.classList.remove('active');
+				}
+				activeItem.classList.add('active');
+			}
+			let panier = {};
+			const getpanier = "{{ path('get_panier') }}";
+			fetch(getpanier)
+				.then(response => response.json())
+				.then(data => {
+					panier = data;
+					displayArticlesTable(articlesData);
+				});
+
+			const categoriesItems = categorieMenu.querySelectorAll('.list-group-item');
+			categoriesItems.forEach(item => {
+				item.addEventListener('click', () => {
+					const clientCode = codetrs.value;
+					if (!clientCode) {
+						Swal.fire({
+							icon: 'warning',
+							title: "Il faut d'abord choisir un client",
+							text: "Veuillez sélectionner un client depuis la liste en premier",
+							confirmButtonText: 'ok'
+						});
+
+					}
+
+				});
+			});
+			function handleCategoryClick(categoryCode, selectedClient, type = 'articles') {
+				const url = `/articles-by-category-and-code-client/${categoryCode}/${selectedClient}`;
+				fetch(url)
+					.then(response => {
+						if (!response.ok) throw new Error(`Erreur lors de la récupération des ${type}`);
+						return response.json();
+					})
+					.then(articles => {
+						articlesData = articles;
+						displayArticlesTable(articles);
+					})
+					.catch(error => {
+						console.error('Erreur:', error);
+						noProductsMessage.textContent = 'Erreur lors du chargement des articles';
+						noProductsMessage.style.display = 'table-cell';
+					});
+			}
+
+			function displayArticlesTable(articles) {
+				const noProductsMessage = document.getElementById('no-products-message');
+				if (!Array.isArray(articles) || articles.length === 0) {
+					if (dataTable) {
+						dataTable.clear().destroy();
+						dataTable = null;
+
+					}
+					noProductsMessage.style.display = 'table-cell';
+					noProductsMessage.textContent = 'Aucun article disponible.';
+					return;
+				}
+				tbody.innerHTML = '';
+				articles.forEach((article, index) => {
+					panierKey = article.code + '_normal';
+					const inCart = panier && panier[panierKey] ? true : false;
+					const row = document.createElement('tr');
+
+					row.setAttribute('data-code', article.code);
+					const quantity = inCart ? panier[panierKey].quantity : 0;
+					const nbrGratuit = inCart ? panier[panierKey].nbrGratuit : 0;
+					const quantityPromo = inCart ? panier[panierKey].quantityPromo : 0;
+					const price = article.prix;
+					const newPrice = inCart && panier[panierKey].newPrice ? panier[panierKey].newPrice : 0;
+
+
+					row.innerHTML = `
+					<td><strong><span style="display:none"> ${article.code}</span> ${article.libelle}</strong></td>
+					<td class="text-center"  style="font-size: 17px;font-weight: bold;">${article.qteDispo}</td>
+					<td class="text-center">
+						<div class="quantity-container">
+							<button class="btn btn-danger minus-btn custom-minus-btn d-flex align-items-center justify-content-center" data-index="${index}" data-code='${article.code}' ><i class="fa fa-minus-square"></i></button>
+							<input type="number" value="${quantity}" data-code='${article.code}' class="quantity-input custom-quantity-input" data-index="${index}" />
+							<button class="btn cur-p btn-warning plus-btn custom-plus-btn d-flex align-items-center justify-content-center" data-index="${index}" data-code='${article.code}' ><i class="fa fa-plus-square"></i></button>
+						</div>
+					 
+					<td class="text-center price" id="price-${index}" data-code='${article.code}'>${price} DT</td>	`;
+
+					if (nbrGratuit > 0) {
+						const badge = document.createElement('span');
+						badge.classList.add('badge', 'badge-success', 'ml-2');
+						badge.textContent = `+${nbrGratuit} gratuit`;
+						const quantityContainer = row.querySelector('.quantity-container');
+						quantityContainer.insertAdjacentElement('afterend', badge);
+					}
+
+					if (inCart && newPrice !== 0 && newPrice !== price) {
+						const priceSpan = row.querySelector('.price');
+						priceSpan.innerHTML = '';
+						const oldPriceElement = document.createElement('span');
+						oldPriceElement.classList.add('old-price', 'ml-2');
+						oldPriceElement.style.textDecoration = 'line-through';
+						oldPriceElement.textContent = `${price} DT`;
+						const newPriceElement = document.createElement('span');
+						newPriceElement.classList.add('new-price', 'ml-2');
+						newPriceElement.style.color = 'red';
+						newPriceElement.textContent = `${newPrice} DT`;
+
+						priceSpan.appendChild(oldPriceElement);
+						priceSpan.appendChild(newPriceElement);
+					} else if (inCart && newPrice !== null && newPrice === price) {
+						const priceSpan = row.querySelector('.price');
+						priceSpan.textContent = `${price} DT`;
+					}
+					if (inCart) {
+						row.classList.add('highlightedItem');
+					}
+					tbody.appendChild(row);
+				});
+				if (dataTable) {
+					dataTable.clear().rows.add($(tbody).find('tr')).draw();
+				} else {
+					dataTable = $('#tableOrder').DataTable({
+						paging: true,
+						searching: true,
+						info: true,
+						language: {
+							sEmptyTable: "Aucune donnée disponible dans le tableau",
+							sInfo: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
+							sInfoEmpty: "Affichage de 0 à 0 sur 0 entrées",
+							sInfoFiltered: "(filtré de _MAX_ entrées au total)",
+							sLengthMenu: "Afficher _MENU_ entrées",
+							sLoadingRecords: "Chargement...",
+							sProcessing: "Traitement...",
+							sSearch: "Rechercher :",
+							sZeroRecords: "Aucun enregistrement correspondant trouvé",
+							oPaginate: {
+								sFirst: "Premier",
+								sLast: "Dernier",
+								sNext: "Suivant",
+								sPrevious: "Précédent"
+							}
+						}
+					});
+				}
+			}
+
+			document.addEventListener('click', function (event) {
+				if (event.target.classList.contains('minus-btn')) {
+					event.preventDefault();
+					const index = event.target.getAttribute('data-index');
+					const code = event.target.getAttribute('data-code');
+					const inputElement = document.querySelector(`input[data-code="${code}"]`);
+					if (inputElement) {
+						let currentValue = parseInt(inputElement.value.trim()) || 0;
+						let newValue = currentValue - 1;
+
+						if (newValue < 0) newValue = 0;
+
+						inputElement.value = newValue;
+
+						handleQuantityChange(inputElement);
+					}
+				}
+				else if (event.target.classList.contains('plus-btn')) {
+					event.preventDefault();
+					const index = event.target.getAttribute('data-index');
+					const code = event.target.getAttribute('data-code');
+					const inputElement = document.querySelector(`input[data-code="${code}"]`);
+					if (inputElement) {
+						let currentValue = parseInt(inputElement.value.trim()) || 0;
+						let newValue = currentValue + 1;
+
+						if (newValue < 0) newValue = 0;
+
+						inputElement.value = newValue;
+
+						handleQuantityChange(inputElement);
+					}
+				}
+				else if (event.target.classList.contains('minus-promo-btn')) {
+					event.preventDefault();
+					const index = event.target.getAttribute('data-index');
+					const code = event.target.getAttribute('data-code');
+					const inputElement = document.querySelector(`.quantity-input-promo[data-code="${code}"]`);
+					if (inputElement) {
+						let currentValue = parseInt(inputElement.value.trim()) || 0;
+						let newValue = currentValue - 1;
+						if (newValue < 0) newValue = 0;
+						inputElement.value = newValue;
+						handleQuantityChange(inputElement);
+					}
+				}
+				else if (event.target.classList.contains('plus-promo-btn')) {
+					event.preventDefault();
+					const index = event.target.getAttribute('data-index');
+					const code = event.target.getAttribute('data-code');
+					const inputElement = document.querySelector(`.quantity-input-promo[data-code="${code}"]`);
+					if (inputElement) {
+						let currentValue = parseInt(inputElement.value.trim()) || 0;
+						let newValue = currentValue + 1;
+
+						if (newValue < 0) newValue = 0;
+
+						inputElement.value = newValue;
+
+						handleQuantityChange(inputElement);
+					}
+
+				}
+			});
+			function checkUnpaidInvoices(userCode) {
+
+				fetch(`/factures-non-soldes/${userCode}`)
+					.then(response => response.json())
+					.then(data => {
+						if (data.error) {
+							Swal.fire({
+								icon: 'error',
+								title: data.error,
+								html: `Vous pouvez <a href="{{ path('factures') }}?userCode=${userCode}&filterNonSolde=true" 
+                            style="color: blue; text-decoration: underline;">Consulter vos factures</a>.`,
+							});
+							$('#codetrs').val('').trigger('change');
+							$('#libtrs').val('').trigger('change');
+						}
+					});
+			}
+			function removeFromCartOrGift(code, isGift = false, isExchange = false) {
+				const itemType = isExchange ? 'exchange' : (isGift ? 'gift' : 'article');
+
+				fetch(`/retirer-artcile-du-panier/${code}`, {
+					method: 'DELETE',
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				})
+					.then(response => {
+						if (response.redirected) {
+							window.location.href = response.url;
+						} else {
+							return response.json();
+						}
+					})
+					.then(data => {
+						if (data && data.status === 'success') {
+
+							updateArticleCount();
+							let targetRow;
+							if (isGift) {
+								targetRow = document.querySelector(`#tableGift tr[data-code="${code}"]`);
+								const giftInput = document.querySelector(`input[data-code="${code}"].quantity-input-gift`);
+								updatePreviousQuantity(giftInput, 0);
+
+							} else if (isExchange) {
+								targetRow = document.querySelector(`#tableExchange tr[data-code="${code}"]`);
+								const exchangeInput = document.querySelector(`input[data-code="${code}"].quantity-input-exchange`);
+								updatePreviousQuantity(exchangeInput, 0);
+
+							} else {
+								targetRow = document.querySelector(`#tableOrder tr[data-code="${code}"]`);
+								const normalInput = document.querySelector(`input[data-code="${code}"].quantity-input`);
+								const promoInput = document.querySelector(`input[data-code="${code}"].quantity-input-promo`);
+
+								updatePreviousQuantity(normalInput, 0);
+								updatePreviousQuantity(promoInput, 0);
+
+							}
+							if (targetRow) {
+								targetRow.classList.remove('highlightedItem');
+								updatePanier();
+							}
+
+						} else {
+							Swal.fire({
+								icon: 'error',
+								title: `Il y a eu un problème lors du supprimer ${itemType}`,
+								text: 'Error'
+							});
+						}
+					})
+					.catch(error => {
+						Swal.fire({
+							icon: 'error',
+							title: `Il y a eu un problème lors du supprimer ${itemType}`,
+							text: 'Error'
+						});
+						console.error('Erreur:', error);
+					});
+			}
+
+			function updateArticleCount() {
+				const getCartCountUrl = "{{ path('get-cart-count') }}";
+				fetch(getCartCountUrl)
+					.then(response => {
+						if (!response.ok) {
+							throw new Error('Erreur lors de la recuperation du nombre d\'articles');
+						}
+						return response.json();
+					})
+					.then(data => {
+						document.getElementById('cart-count').textContent = data.count;
+					})
+					.catch(error => console.error('Erreur:', error));
+			}
+			function updatePanier() {
+				const getpanier = "{{ path('get_panier') }}";
+				fetch(getpanier)
+					.then(response => response.json(),
+					)
+					.then(data => {
+						console.log('data ', data)
+						const canChangeClient = Array.isArray(data) ? data.length === 0 : Object.keys(data).length === 0;
+						displayMessage(canChangeClient);
+						updateSelectState(canChangeClient);
+					})
+					.catch(error => console.error('Erreur lors de la mise à jour du panier:', error));
+			}
+			function addToCartOrGift(code, quantity, index, quantityPromo = 0, quantityGift = 0, isGift = false, quantityEchange = 0, isExchange = false) {
+				const priceElement = document.querySelector(`.price[data-code='${code}']`);
+				const priceText = priceElement ? priceElement.textContent : '0';
+				const price = parseFloat(priceText.replace(',', '.'));
+				const plusBtn = document.querySelector(`.plus-btn[data-code='${code}']`);
+				const minusBtn = document.querySelector(`.minus-btn[data-code='${code}']`);
+				const plusPromoBtn = document.querySelector(`.plus-promo-btn[data-code='${code}']`);
+				const minusPromoBtn = document.querySelector(`.minus-promo-btn[data-code='${code}']`);
+
+				[plusBtn, minusBtn, plusPromoBtn, minusPromoBtn].forEach(btn => {
+					if (btn) btn.disabled = true;
+				});
+
+				const selectedClientname = libtrs.value;
+				const selectedClient = codetrs.value;
+
+				if (!selectedClient || !selectedClientname) {
+					alert('Vous devez choisir un client');
+					[plusBtn, minusBtn, plusPromoBtn, minusPromoBtn].forEach(btn => {
+						if (btn) btn.disabled = false;
+					});
+					return;
+				}
+
+				if (!code || (!quantity && !quantityPromo) || isNaN(price)) {
+					console.error('Code, quantity, unit, and valid price must be provided');
+					[plusBtn, minusBtn, plusPromoBtn, minusPromoBtn].forEach(btn => {
+						if (btn) btn.disabled = false;
+					});
+					return;
+				}
+
+				const priceTotal = price * quantity;
+				let url = '';
+
+				const addToCartUrl = "{{ path('add-to-cart', {'code': 'code'}) }}";
+				url = addToCartUrl.replace('code', code) +
+					`?quantity=${quantity}&quantityPromo=${quantityPromo}&client=${selectedClient}&clientname=${encodeURIComponent(selectedClientname)}&price=${price}&priceTotal=${priceTotal}&gift=0&exchange=1`;
+
+				fetch(url, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				})
+					.then(response => {
+						if (response.redirected) {
+							window.location.href = response.url;
+						} else {
+							return response.json();
+						}
+					})
+					.then(data => {
+						if (data && data.status === 'success') {
+							updateArticleCount();
+							updatePanier();
+
+							let targetRow = document.querySelector(`#tableOrder tr[data-code="${code}"]`);
+							if (targetRow) {
+								targetRow.classList.add('highlightedItem');
+								const nbrGratuit = data.nbrGratuit || 0;
+								updateRow(targetRow, code, quantity, quantityPromo, nbrGratuit,
+									selectedClient);
+							}
+
+						}
+					})
+					.catch(error => console.error('Erreur:', error))
+					.finally(() => {
+						[plusBtn, minusBtn, plusPromoBtn, minusPromoBtn].forEach(btn => {
+							if (btn) btn.disabled = false;
+						});
+					});
+			}
+			document.addEventListener('focusout', function (event) {
+				if (event.target && (event.target.classList.contains('quantity-input') || event.target.classList.contains('quantity-input-promo'))) {
+					handleQuantityChange(event.target);
+				}
+			}, true);
+			async function updateRow(row, code, quantity, quantityPromo, nbrGratuit, selectedClient) {
+				const quantityInput = row.querySelector('.quantity-input');
+				if (quantityInput) {
+					quantityInput.value = quantity;
+					const priceSpan = row.querySelector('.price');
+					if (!priceSpan) {
+						console.error(`Élément .price introuvable dans la ligne pour l'article ${code}`);
+						return;
+					}
+
+					const existingBadge = row.querySelector('.badge-success');
+					if (nbrGratuit > 0) {
+
+						if (!existingBadge) {
+							const badge = document.createElement('span');
+							badge.classList.add('badge', 'badge-success', 'ml-2');
+							badge.textContent = `+${nbrGratuit} gratuit`;
+							const quantityContainer = row.querySelector('.quantity-container');
+							if (quantityContainer) {
+								quantityContainer.insertAdjacentElement('afterend', badge);
+							}
+						} else {
+							existingBadge.textContent = `+${nbrGratuit} gratuit`;
+						}
+					} else if (existingBadge) {
+						existingBadge.remove();
+					}
+
+					updatePriceWithDiscount(code, selectedClient, quantity, priceSpan);
+
+				}
+
+				const quantityInputPromo = row.querySelector('.quantity-input-promo');
+				if (quantityInputPromo) {
+					quantityInputPromo.value = quantityPromo;
+				}
+
+				if (quantity > 0 || quantityPromo > 0) {
+					row.classList.add('highlightedItem');
+				} else {
+					row.classList.remove('highlightedItem');
+				}
+			}
+
+			function handleQuantityChange(inputElement) {
+				const code = inputElement.getAttribute('data-code');
+				let quantity = parseInt(inputElement.value.trim()) || 0;
+
+				const normalInput = document.querySelector(`input[data-code="${code}"].quantity-input`);
+				const promoInput = document.querySelector(`input[data-code="${code}"].quantity-input-promo`);
+
+				let quantityNormal = normalInput ? parseInt(normalInput.value.trim()) || 0 : 0;
+				let quantityPromo = promoInput ? parseInt(promoInput.value.trim()) || 0 : 0;
+				const isMinusAction = inputElement.classList.contains('minus-btn') ||
+					inputElement.classList.contains('minus-promo-btn');
+
+				if (quantityNormal < 0) {
+					normalInput.value = 0;
+					quantityNormal = 0;
+				}
+				if (quantityPromo < 0) {
+					promoInput.value = 0;
+					quantityPromo = 0;
+				}
+
+				if (quantityNormal > 0 || quantityPromo > 0) {
+					updatePreviousQuantity(normalInput, quantityNormal);
+					updatePreviousQuantity(promoInput, quantityPromo);
+
+					addToCartOrGift(code, quantityNormal, 0, quantityPromo);
+				} else if (quantityNormal == 0 && quantityPromo == 0) {
+					const prev1 = normalInput?.getAttribute('data-prev') || "0";
+					const prev2 = promoInput?.getAttribute('data-prev') || "0";
+					if ((prev1 !== "0" || prev2 !== "0") && !isMinusAction) {
+
+						removeFromCartOrGift(code, false, false);
+						const row = document.querySelector(`tr[data-code="${code}"]`);
+						if (row) {
+							const existingBadge = row.querySelector('.badge-success');
+							if (existingBadge) {
+								existingBadge.remove();
+							}
+						}
+					}
+				}
+
+				console.log(`Article ${code} mis à jour - 
+				Normal: ${quantityNormal}, 
+				Promo: ${quantityPromo}`);
+			}
+
+			function updatePreviousQuantity(input, quantity) {
+				if (input) {
+					input.setAttribute('data-prev', quantity);
+				}
+			}
+			function displayMessage(canChangeClient) {
+				const messageContainer = document.getElementById("message-container");
+				if (canChangeClient) {
+					messageContainer.style.display = "none";
+					document.getElementById("message-container").textContent = "";
+				} else {
+					messageContainer.style.display = "block";
+					messageContainer.textContent = "Vous devez compléter le panier pour ce client avant d'effectuer des modifications.";
+				}
+			}
+			function updateSelectState(canChangeClient) {
+				if (canChangeClient) {
+					$('#codetrs, #libtrs').prop('disabled', false).trigger('change');
+				} else {
+					$('#codetrs, #libtrs').prop('disabled', true).trigger('change');
+				}
+			}
+			async function updatePriceWithDiscount(code, selectedClient, quantity, priceSpan) {
+				try {
+					const response = await fetch(`/verifier?code=${code}&userCode=${selectedClient}&qteArt=${quantity}`);
+					if (response.ok) {
+						const data = await response.json();
+
+						if (data && data.discount !== undefined) {
+
+							const oldPrice = parseFloat(priceSpan.textContent.replace(' DT', ''));
+
+							const newPrice = data.discount;
+							const oldPriceRounded = oldPrice.toFixed(3);
+							const newPriceRounded = newPrice.toFixed(3);
+							priceSpan.innerHTML = '';
+							const oldPriceElement = document.createElement('span');
+							oldPriceElement.classList.add('old-price', 'ml-2');
+							oldPriceElement.textContent = `${oldPriceRounded} DT`;
+
+							if (oldPriceRounded !== newPriceRounded) {
+								const newPriceElement = document.createElement('span');
+								newPriceElement.classList.add('new-price', 'ml-2');
+								newPriceElement.setAttribute('data-code', code);
+								newPriceElement.style.color = 'red';
+								newPriceElement.textContent = `${newPriceRounded} DT`;
+
+								oldPriceElement.style.textDecoration = 'line-through';
+
+								priceSpan.appendChild(oldPriceElement);
+								priceSpan.appendChild(newPriceElement);
+							} else {
+								priceSpan.appendChild(oldPriceElement);
+							}
+						} else {
+							console.error('Aucune remise définie dans la réponse de l’API');
+						}
+					} else {
+						console.error('Erreur lors de la récupération de la remise');
+					}
+				} catch (error) {
+					console.error('Erreur de connexion à l’API', error);
+				}
+			}
+
+		});
+	</script>
+</body>
+{% endblock %}

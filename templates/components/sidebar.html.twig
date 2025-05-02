@@ -85,8 +85,25 @@
                 <span>Règlement</span> <!-- Titre plus explicite -->
             </a>
         </li>
+            
     </ul>
 </li>
+  <li class="{{ app.request.attributes.get('_route') == 'app_order' ? 'active' : '' }}">
+               <a href="{{ path('app_order') }}">
+                  <i class="fas fa-table" style="color: #6666ef;"></i>
+                   <span>Ajouter Commande</span>
+               </a>
+           </li>
+
+     <li>
+      <li class="{{ app.request.attributes.get('_route') == 'bon_de_commandes' ? 'active' : '' }}">
+               <a href="{{ path('bon_de_commandes') }}">
+                  <i class="fas fa-file-invoice-dollar" style="color: #6666ef;"></i>
+                           <span>bons de commandes</span></a>
+
+           </li>
+
+
 
          {# <li class="{{ app.request.attributes.get('_route') == 'ech_client_fa' ? 'active' : '' }}">
             <a href="{{ path('ech_client') }}">FA</a>

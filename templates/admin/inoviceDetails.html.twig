@@ -1,0 +1,251 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choisir une Base de Données</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<body class="inner_page tables_page">
+    <div class="full_container">
+        <div class="inner_container">
+            {% include 'components/sidebar.html.twig' %}
+            <div id="content">
+                {% include 'components/topbar.html.twig' %}
+                <div class="midde_cont">
+                    <div class="container-fluid">
+
+                        <!-- row 1 start -->
+                        <div class="row">
+                            <!-- invoice section -->
+                            <div class="col-md-12">
+                                <div class="white_shd full margin_bottom_30" style="margin-top: 15px;">
+
+                                 <!-- title start -->
+                                    <div class="full graph_head">
+                                        <div class="heading1 margin_0">
+                                            <h2><i class="fa fa-file-text-o"></i>Bon de commande</h2>
+                                        </div>
+                                    </div>
+                                <!-- title end -->
+
+                                  <!-- rows start -->
+                                    <div class="full">
+                                        <div class="invoice_inner">
+                                            <div class="row">
+                                                <!-- commercial start -->
+                                                <div class="col-md-4">
+                                                    <div class="full invoice_blog padding_infor_info padding-bottom_0">
+                                                        <h4>De </h4>
+                                                        <p><br>
+                                                            {% if commercial is defined %}
+                                                            <strong>Nom : </strong>{{ commercial.libelle }}<br>
+                                                            <strong>Code : </strong>{{ commercial.code }}<br>
+                                                            {% endif %}
+
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                              <!-- commercial end -->
+
+                                                <!-- client start -->
+                                                <div class="col-md-4">
+                                                    <div class="full invoice_blog padding_infor_info padding-bottom_0">
+                                                        <h4>À
+                                                        </h4>
+                                                        {% if client is defined %}
+                                                        <p><strong>Nom Client : </strong>{{ client.code }} / {{
+                                                            client.libelle }}<br>
+                                                            <strong>Code tva: </strong>{{ client.codetva }} <br>
+                                                            <strong> Adresse: </strong>{{ client.adresse }}<br>
+                                                            {% if client.tel2 != null %}
+                                                            <strong>Tél : </strong><a href="tel:{{ client.tel }}">{{
+                                                                client.tel }} / {{ client.tel2 }}</a><br>
+                                                            {% endif %}
+
+                                                        </p>
+                                                        {% endif %}
+
+                                                    </div>
+                                                </div>
+                                                 <!-- client end -->
+                                                 <!-- facture start -->
+                                                <div class="col-md-4">
+                                                    <div class="full invoice_blog padding_infor_info padding-bottom_0">
+                                                        {% if numInovice is defined %}
+                                                        <h4>Facture N°- {{ numInovice }} </h4>
+                                                        {% endif %}
+                                                        {% if detailsInovice is not empty %}
+                                                        <strong>date de creation: </strong> {{ detailsInovice[0].datemvt
+                                                        }} à {{ detailsInovice[0].heure}}<br></p>
+                                                        
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            <!-- facture end -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- rows end -->
+
+                                         <!-- tableaux start -->
+
+                                    <div class="full padding_infor_info">
+                                        <div class="table_row">
+                                           <!-- articles start -->
+
+                                            <div class="table-responsive">
+                                                <table class="table table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="text-left">Article</th>
+                                                            <th class="text-center">code</th>
+                                                            <th class="text-center">Qte</th>
+                                                            {# <th class="text-center">Qte gratuit</th> #}
+                                                            {# <th class="text-center">Qte promo</th> #}
+                                                            <th class="text-center">Prix unitaire</th>
+                                                            <th class="text-center">Sous-total</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for article in detailsInovice %}
+                                                        {% if article.type == 'V' %}
+                                                            <tr>
+                                                            <td class="text-left">{{ article.desart }}</td>
+                                                            <td class="text-center"> {{ article.codeart }}</td>
+                                                            <td class="text-center">{{ article.qteart }}</td>
+                                                            {# <td class="text-center">{{ article.qtegratuit }}</td>
+                                                            <td class="text-center">{{ article.qtepromo }}</td> #}
+                                                            <td class="text-center">{{ article.puht }}</td>
+                                                            <td class="text-center">{{ (article.puht *
+                                                                article.qteart)|number_format(3, '.', '') }}</td>
+                                                        </tr>
+                                                        {% endif %}
+                                                        {% endfor %}
+
+                                                    </tbody>
+                                                </table>
+
+                                            </div>
+                                         <!-- articles end -->
+                                          <!-- articles retournés start -->
+                                              {% set hasExchange = detailsInovice|filter(article => article.type == 'R')|length > 0 %}
+                                              {% if hasExchange %}
+                                              <div class="my-4">
+                                                <h4>🔄 Articles retournés</h4>
+                                            </div>
+                                              <div class="table_row">
+                                                  <div class="table-responsive">
+                                                      <table class="table table-striped">
+                                                          <thead>
+                                                              <tr>
+                                                                  <th class="text-left">Article</th>
+                                                                  <th class="text-center">code</th>
+                                                                  <th class="text-center">Qte</th>
+                                                                  <th class="text-center">Prix unitaire</th>
+                                                                  <th class="text-center">Sous-total</th>
+      
+                                                              </tr>
+                                                          </thead>
+                                                          <tbody>
+                                                              {% for article in detailsInovice %}
+                                                              {% if article.type == 'R' %}
+                                                              <tr>
+                                                                  <td class="text-left">{{ article.desart }}</td>
+                                                                  <td class="text-center"> {{ article.codeart }}</td>
+                                                                  <td class="text-center">{{ article.qteart }}</td>
+                                                                  <td class="text-center">{{ article.puht }}</td>
+                                                                  <td class="text-center">{{ (article.puht *
+                                                                    article.qteart)|number_format(3, '.', '') }}</td>
+                                                              </tr>
+                                                              {% endif %}
+                                                              {% endfor %}
+  
+                                                          </tbody>
+                                                      </table>
+                                                  </div>
+                                              </div>
+                                              {% endif %}
+                                            <!-- articles retournés end -->
+                                             <!-- articles cadeaux start -->
+                                            {% set hasGift = detailsInovice|filter(article => article.type == 'C')|length > 0 %}
+                                            {% if hasGift %}
+                                            <div class="my-4">
+                                                <h4>🎁 Articles Cadeaux</h4>
+                                            </div>
+                                            <div class="table_row">
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped">
+                                                        <thead>
+                                                            <tr>
+                                                                <th class="text-left">Article</th>
+                                                                <th class="text-center">code</th>
+                                                                <th class="text-center">Qte</th>
+                                                                <th class="text-center">Sous-total</th>
+    
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for article in detailsInovice %}
+                                                            {% if article.type == 'C' %}
+                                                            <tr>
+                                                                <td class="text-left">{{ article.desart }}</td>
+                                                                <td class="text-center"> {{ article.codeart }}</td>
+                                                                <td class="text-center">{{ article.qteart }}</td>
+                                                                <td class="text-center">0.000</td>
+                                                            </tr>
+                                                            {% endif %}
+                                                            {% endfor %}
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                             <!-- articles cadeaux end -->
+                                        </div>
+                                    </div>
+                                       <!-- tableaux end -->
+
+                                </div>
+                            </div>
+                        </div>
+                         <!-- row 1 end -->
+
+                        <!-- row vide start -->
+                        <div class="row">
+                            <div class="col-md-6">
+                        <!-- row vide end -->
+
+                            </div>
+                            <!--Montant total start-->
+                            <div class="col-md-6">
+                                <div class="full white_shd">
+                                    <div class="full graph_head">
+                                        <div class="heading1 margin_0">
+                                            <h2>Montant total</h2>
+                                        </div>
+                                    </div>
+                                    <div class="full padding_infor_info">
+                                        <div class="price_table">
+                                            <div class="table-responsive">
+                                                <table class="table">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th style="width:50%">Total:</th>
+                                                            <td>{{ totalGlobal | default(0) | number_format(3, ',', ' ') }} DT</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--Montant total end-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock %}

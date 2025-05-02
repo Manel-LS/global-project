@@ -28,17 +28,29 @@ class Client
 
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $scredit = null;
-    #[ORM\Column(length: 255)]
-    private ?string $ctarif = null;
+   
     #[ORM\Column(length: 255)]
     private ?string $coderep = null;
+
+       
+    #[ORM\Column(length: 255)]
+    private ?string $tel2 = null;
+
+
     
-    public function getCtarif()
-    {
-        return $this->ctarif;
-    }
+    
+   
+    #[ORM\Column(length: 255)]
+    private ?string $ctarif = null;
+    
+    
+    #[ORM\Column(length: 255)]
+    private ?string $codetva = null;
 
-
+    #[ORM\Column(length: 255)]
+    private ?string $adresse = null;
+     
+    
     public function getId(): ?string
     {
         return $this->code;
@@ -159,6 +171,87 @@ class Client
     public function setCoderep($coderep)
     {
         $this->coderep = $coderep;
+
+        return $this;
+    }
+ 
+
+    /**
+     * Get the value of ctarif
+     */ 
+    public function getCtarif()
+    {
+        return $this->ctarif;
+    }
+
+    /**
+     * Set the value of ctarif
+     *
+     * @return  self
+     */ 
+    public function setCtarif($ctarif)
+    {
+        $this->ctarif = $ctarif;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of codetva
+     */ 
+    public function getCodetva()
+    {
+        return $this->codetva;
+    }
+
+    /**
+     * Set the value of codetva
+     *
+     * @return  self
+     */ 
+    public function setCodetva($codetva)
+    {
+        $this->codetva = $codetva;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of adresse
+     */ 
+    public function getAdresse()
+    {
+        return $this->adresse;
+    }
+
+    /**
+     * Set the value of adresse
+     *
+     * @return  self
+     */ 
+    public function setAdresse($adresse)
+    {
+        $this->adresse = $adresse;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of tel2
+     */ 
+    public function getTel2()
+    {
+        return $this->tel2;
+    }
+
+    /**
+     * Set the value of tel2
+     *
+     * @return  self
+     */ 
+    public function setTel2($tel2)
+    {
+        $this->tel2 = $tel2;
 
         return $this;
     }

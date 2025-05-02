@@ -8,7 +8,6 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity()]
-
 class Article
 {
     #[ORM\Id]
@@ -17,6 +16,9 @@ class Article
 
     #[ORM\Column(type: 'string', length: 255)]
     private ?string $libelle = null;
+
+    #[ORM\Column(type: 'string', length: 8)]
+    private ?string $famille = null;
 
     #[ORM\Column(name: 'libfam', type: 'string', length: 255)]
     private ?string $libfam = null;
@@ -37,13 +39,18 @@ class Article
 
     #[ORM\Column(type: 'string', length: 255)]
     private ?string $unite = null;
- 
+    #[ORM\OneToMany(mappedBy: 'article', targetEntity: Tarifart::class)]
+    private Collection $tarifarts;
 
     public function __construct()
     {
-     }
+        $this->tarifarts = new ArrayCollection();
+    }
 
-  
+    public function getTarifarts(): Collection
+    {
+        return $this->tarifarts;
+    }
 
     public function getCode(): ?string
     {
@@ -53,8 +60,10 @@ class Article
     public function setCode(string $code): self
     {
         $this->code = $code;
+
         return $this;
     }
+
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -63,8 +72,10 @@ class Article
     public function setLibelle(string $libelle): self
     {
         $this->libelle = $libelle;
+
         return $this;
     }
+
 
     public function getLibfam(): ?string
     {
@@ -74,9 +85,9 @@ class Article
     public function setLibfam(string $libfam): self
     {
         $this->libfam = $libfam;
+
         return $this;
     }
-
 
     public function getPrixvttc1(): ?float
     {
@@ -89,6 +100,7 @@ class Article
 
         return $this;
     }
+
     public function getUnite(): ?string
     {
         return $this->unite;
@@ -97,15 +109,14 @@ class Article
     public function setUnite(string $unite): self
     {
         $this->unite = $unite;
+
         return $this;
     }
-
 
     public function getNature()
     {
         return $this->nature;
     }
-
 
     public function setNature($nature)
     {
@@ -114,12 +125,10 @@ class Article
         return $this;
     }
 
-
     public function getFodec()
     {
         return $this->fodec;
     }
-
 
     public function setFodec($fodec)
     {
@@ -127,7 +136,6 @@ class Article
 
         return $this;
     }
-
 
     public function getFourchprix()
     {
@@ -141,13 +149,11 @@ class Article
         return $this;
     }
 
- 
     public function getConsvente()
     {
         return $this->consvente;
     }
 
-    
     public function setConsvente($consvente)
     {
         $this->consvente = $consvente;
@@ -155,16 +161,26 @@ class Article
         return $this;
     }
 
-  
     public function getTauxtva()
     {
         return $this->tauxtva;
     }
 
-
     public function setTauxtva($tauxtva)
     {
         $this->tauxtva = $tauxtva;
+
+        return $this;
+    }
+
+    public function getFamille()
+    {
+        return $this->famille;
+    }
+
+    public function setFamille($famille)
+    {
+        $this->famille = $famille;
 
         return $this;
     }

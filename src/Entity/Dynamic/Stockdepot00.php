@@ -2,10 +2,13 @@
 
 namespace App\Entity\Dynamic;
 
+use App\Repository\StockdepotRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity()]
-class Stockdepot
+class Stockdepot00
 {
     #[ORM\Id]
     #[ORM\Column(type: 'string')]
@@ -20,26 +23,35 @@ class Stockdepot
     #[ORM\Column(type: 'string', length: 255)]
     private ?string $libdep = null;
 
-    #[ORM\ManyToOne(targetEntity: Categorie::class)]
-    #[ORM\JoinColumn(name: 'famille', referencedColumnName: 'code', nullable: false)]
-    private Categorie $categorie;
+
     #[ORM\Column(name: 'libfam', type: 'string', length: 255)]
     private ?string $libfam = null;
 
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $prixvttc1 = null;
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $prixvht1 = null;
 
     #[ORM\Column(type: 'string', length: 255)]
     private ?string $unite = null;
+    #[ORM\OneToMany(mappedBy: 'article', targetEntity: self::class)]
+    private Collection $tarifarts;
 
     #[ORM\Column(type: 'float')]
     private ?float $qteart = null;
-
     #[ORM\Column(type: 'float')]
     private ?float $nature = null;
+    
 
-    #[ORM\Column(type: 'float', nullable: true)]
-    private ?float $prixvht1 = null;
+    public function __construct()
+    {
+        $this->tarifarts = new ArrayCollection();
+    }
+
+    public function getTarifarts(): Collection
+    {
+        return $this->tarifarts;
+    }
 
     public function getCodeart(): ?string
     {
@@ -53,17 +65,7 @@ class Stockdepot
         return $this;
     }
 
-    public function getCategorie(): Categorie
-    {
-        return $this->categorie;
-    }
-
-    public function setCategorie(Categorie $categorie): self
-    {
-        $this->categorie = $categorie;
-
-        return $this;
-    }
+  
 
     public function getLibfam(): ?string
     {
@@ -105,6 +107,7 @@ class Stockdepot
     {
         return $this->desart;
     }
+
 
     public function setDesart($desart)
     {
@@ -149,23 +152,39 @@ class Stockdepot
         return $this;
     }
 
+    /**
+     * Get the value of nature
+     */ 
     public function getNature()
     {
         return $this->nature;
     }
-  
+
+    /**
+     * Set the value of nature
+     *
+     * @return  self
+     */ 
     public function setNature($nature)
     {
         $this->nature = $nature;
 
         return $this;
     }
-  
+
+    /**
+     * Get the value of prixvht1
+     */ 
     public function getPrixvht1()
     {
         return $this->prixvht1;
     }
 
+    /**
+     * Set the value of prixvht1
+     *
+     * @return  self
+     */ 
     public function setPrixvht1($prixvht1)
     {
         $this->prixvht1 = $prixvht1;

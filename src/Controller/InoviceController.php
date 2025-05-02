@@ -7,6 +7,7 @@ use App\Entity\Dynamic\Client;
 use App\Entity\Dynamic\Ebl;
 use App\Entity\Dynamic\Efactv;
 use App\Entity\Dynamic\Efc;
+use App\Entity\Dynamic\LigneWeb;
 use App\Entity\Dynamic\Reglement;
 use App\Repository\ClientRepository;
 use App\Repository\EfcRepository;
@@ -39,8 +40,10 @@ class InoviceController extends AbstractController
     #[Route('factures', name: 'factures')]
     public function getInovices(EfcRepository $efcRepository, ClientRepository $clientRepository): Response
     {
-        $commercial = $this->getUser();
-        $codeRep = $commercial->getCode();
+           /** @var \App\Entity\Utilisateur $user */
+           $user = $this->getUser();
+           $codeRep = $user->getCode();
+        
         $clientsData = [];
         $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
         $clients = $entityManager->getRepository(Client::class)->findAll();
@@ -90,43 +93,6 @@ class InoviceController extends AbstractController
         return new JsonResponse($factures);
     }
 
-//     #[Route('fc', name: 'get_fc')]
-// public function getFc(Request $request): Response
-// {
-//     $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
-//     $clients = $entityManager->getRepository(Client::class)->findAll();
-
-//     $codetrs = $request->query->get('codetrs');
-//     $startDate = $request->query->get('startDate');
-//     $endDate = $request->query->get('endDate');
-
-//     $queryBuilder = $entityManager->createQueryBuilder()
-//         ->select('e')
-//         ->from(Efc::class, 'e')
-//         ->orderBy('e.datemvt', 'DESC');
-//     if ($codetrs && $startDate && $endDate) {
-//         try {
-//             $queryBuilder
-//                 ->where('e.codetrs = :codetrs')
-//                 ->andWhere('e.datemvt BETWEEN :startDate AND :endDate')
-//                 ->setParameter('codetrs', $codetrs)
-//                 ->setParameter('startDate', new \DateTime($startDate))
-//                 ->setParameter('endDate', new \DateTime($endDate));
-//         } catch (\Exception $e) {
-//             $this->addFlash('error', 'Erreur lors de la récupération des données: ' . $e->getMessage());
-//         }
-//     }
-
-//     $inovices = $queryBuilder->getQuery()->getResult();
-
-//     return $this->render("admin/fc.html.twig", [
-//         'inovices' => $inovices,
-//         'clients' => $clients,
-//         'selected_codetrs' => $codetrs,
-//         'selected_startDate' => $startDate,
-//         'selected_endDate' => $endDate
-//     ]);
-// }
 #[Route('fc', name: 'get_fc')]
 public function getFc(Request $request): Response
 {
@@ -415,8 +381,133 @@ public function getBL(Request $request): Response
         ]);
     }
 
+    #[Route('bon-de-commandes', name: 'bon_de_commandes')]
+    public function getBc(): Response
+    {
+        $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
+        $ligneWebRepository = $entityManager->getRepository(LigneWeb::class);
+        $clientRepository = $entityManager->getRepository(Client::class);
 
+        /** @var  \App\Entity\Utilisateur $commercial */
+        $commercial = $this->getUser();
+        $codeRep = $commercial->getCode();
+        $clientsData = [];
+        $clients = [];
+        // $clients = $clientRepository->createQueryBuilder('c')
+        //     ->andWhere('c.coderep = :coderep')
+        //     ->setParameter('coderep', $codeRep)
+        //     ->getQuery()
+        //     ->getResult();
+        $clients = $entityManager->getRepository(Client::class)->findAll();
+        foreach ($clients as $client) {
+            $clientsData[$client->getCode()] = $client->getLibelle();
+        }
 
+        $groupedByNummvt = $this->getGroupOrdersByNumberAndCodeRep($ligneWebRepository, $codeRep);
+        return $this->render("admin/bc.html.twig", [
+            'inovices' => $groupedByNummvt,
+            'clients' => $clients,
+            'clientsData' => json_encode($clientsData),
+
+        ]);
+    }
+
+    #[Route('bon-de-commandes-by-client/{userCode}', name: 'bon_de_commandes_by_clients')]
+    public function getInovicesByClient(string $userCode): JsonResponse
+    {
+        $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
+        $ligneWebRepository = $entityManager->getRepository(LigneWeb::class);
+
+        $groupedByNummvt = $ligneWebRepository->createQueryBuilder('l')
+            ->select('l')
+            ->andWhere('l.codetrs = :codetrs')
+            ->setParameter('codetrs', $userCode)
+            ->orderBy('l.nummvt')
+            ->getQuery()
+            ->getResult();;
+
+        if (count($groupedByNummvt) == 0) {
+            return new JsonResponse([]);
+        }
+
+        $uniqueFactures = [];
+        $seenNummvt = [];
+
+        foreach ($groupedByNummvt as $facture) {
+            $nummvt = $facture->getNummvt();
+
+            if (!isset($seenNummvt[$nummvt])) {
+                $uniqueFactures[] = [
+                    'nummvt' => $nummvt,
+                    'libtrs' => $facture->getLibtrs(),
+                    'datemvt' => $facture->getDatemvt()
+                ];
+                $seenNummvt[$nummvt] = true;
+            }
+        }
+
+        return new JsonResponse($uniqueFactures);
+    }
+
+    #[Route('bon-de-commandes-details/{nummvt}', name: 'bon_de_commandes_details')]
+    public function getBcDetails(int $nummvt): Response
+    {
+        $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
+        $ligneWebRepository = $entityManager->getRepository(LigneWeb::class);
+        $clientRepository = $entityManager->getRepository(Client::class);
+
+        /** @var \App\Entity\Utilisateur $commercial */
+        $commercial = $this->getUser();
+        $codeRep = $commercial->getCode();
+        $groupedByNummvt = $this->getGroupOrdersByNumberAndCodeRep($ligneWebRepository, $codeRep);
+
+        if (!isset($groupedByNummvt[$nummvt])) {
+            throw $this->createNotFoundException("Commande avec le numéro $nummvt introuvable.");
+        }
+
+        $detailsInovice = $groupedByNummvt[$nummvt];
+        $codeClient = $detailsInovice[0]->getCodetrs();
+        $codeRep = $detailsInovice[0]->getCoderep();
+        $client = $clientRepository->findOneBy(['code' => $codeClient]);
+
+        $total = array_map(function ($item) {
+            return $item->getQteart() * $item->getPuht();
+        }, $detailsInovice);
+
+        $totalGlobal = array_sum($total);
+
+        return $this->render("admin/inoviceDetails.html.twig", [
+            'numInovice' => $nummvt,
+            'detailsInovice' => $detailsInovice,
+            'client' => $client,
+            'commercial' => $commercial,
+            'total' => $total,
+            'totalGlobal' => $totalGlobal,
+        ]);
+    }
+
+    public function getGroupOrdersByNumberAndCodeRep($ligneWebRepository, String $codeRep)
+    {
+        $nonValideLigneWeb = $ligneWebRepository->createQueryBuilder('l')
+            ->select('l')
+            ->where('l.valide = :valide')
+            ->andWhere('l.coderep = :coderep')
+            ->setParameter('valide', 0)
+            ->setParameter('coderep', $codeRep)
+            ->orderBy('l.nummvt')
+            ->getQuery()
+            ->getResult();
+        $groupedByNummvt = [];
+
+        foreach ($nonValideLigneWeb as $ligne) {
+            $nummvt = $ligne->getNummvt();
+            if (!isset($groupedByNummvt[$nummvt])) {
+                $groupedByNummvt[$nummvt] = [];
+            }
+            $groupedByNummvt[$nummvt][] = $ligne;
+        }
+        return $groupedByNummvt;
+    }
     
     
 }
