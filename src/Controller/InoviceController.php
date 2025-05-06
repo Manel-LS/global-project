@@ -5,8 +5,14 @@ namespace App\Controller;
 use App\DTO\InvoiceDto;
 use App\Entity\Dynamic\Client;
 use App\Entity\Dynamic\Ebl;
+use App\Entity\Dynamic\Ebs;
 use App\Entity\Dynamic\Efactv;
 use App\Entity\Dynamic\Efc;
+use App\Entity\Dynamic\Lbcc;
+use App\Entity\Dynamic\Lbl;
+use App\Entity\Dynamic\Lbs;
+use App\Entity\Dynamic\Lfactv;
+use App\Entity\Dynamic\Lfc;
 use App\Entity\Dynamic\LigneWeb;
 use App\Entity\Dynamic\Reglement;
 use App\Repository\ClientRepository;
@@ -145,6 +151,98 @@ public function getFc(Request $request): Response
         'selected_endDate' => $endDate
     ]);
 }
+#[Route('/api/fc-details/{nummvt}', name: 'api_fc_details', methods: ['GET'])]
+public function getFcDetails(string $nummvt): JsonResponse
+{
+    $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
+    $details = $entityManager->getRepository(Lfc::class)->findBy(['nummvt' => $nummvt]);
+//ssdd($details);
+    $result = [];
+
+    foreach ($details as $detail) {
+        $result[] = [
+            'codeart' => $detail->getCodeart(),
+            'desart' => $detail->getDesart(),
+            'qteart' => $detail->getQteart(),
+            'puht' => $detail->getPuht(),
+            'remise' => $detail->getRemise(),
+            'tauxtva' => $detail->getTauxtva(),
+            'puttc' => $detail->getPuttc(),
+            'mttotal' => $detail->getmttotal(),
+        ];
+    }
+
+    return new JsonResponse($result);
+}
+#[Route('/api/bs-details/{nummvt}', name: 'bs_details', methods: ['GET'])]
+public function getBsDetails(string $nummvt): JsonResponse
+{
+
+    $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
+    $details = $entityManager->getRepository(Lbs::class)->findBy(['nummvt' => $nummvt]); 
+     $data = array_map(function($item) {
+        return [
+            'codeart' => $item->getCodeart(),
+            'desart' => $item->getDesart(),
+            'qteart' => $item->getQteart(),
+            'puht' => $item->getPuht(),
+            'remise' => $item->getRemise(),
+            'tauxtva' => $item->getTauxtva(),
+            'puttc' => $item->getPuttc(),
+            'mttctotal' => $item->getmttotal(),
+        ];
+    }, $details);
+     return $this->json($data);
+}
+#[Route('/bl/details/{nummvt}', name: 'bl_details')]
+public function getBlDetails(string $nummvt): JsonResponse
+{
+    $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
+    $details = $entityManager->getRepository(Lbl::class)->findBy(['nummvt' => $nummvt]); 
+ 
+     
+    $data = array_map(function ($line) {
+        return [
+            'codeart' => $line->getCodeart(),
+            'desart' => $line->getDesart(),
+            'qteart' => $line->getQteart(),
+            'puht' => $line->getPuht(),
+            'puttc' => $line->getPuttc(),
+            'tauxtva'=> $line->getTauxtva(),
+            'remise' => $line->getRemise(),
+            'mttotal' => $line->getmttotal(),
+        ];
+    }, $details);
+
+    return new JsonResponse($data);
+}
+
+#[Route('/facture-av/details/{nummvt}', name: 'get_fa_details')]
+public function getFaDetails($nummvt): JsonResponse
+{
+    $entityManager = $this->dynamicEntityManagerService->getDynamicEntityManager();
+    $details = $entityManager->getRepository(Lfactv::class)->findBy(['nummvt' => $nummvt]); 
+ 
+
+    $data = [];
+    foreach ($details as $line) {
+        $data[] = [
+            'codeart' => $line->getCodeart(),
+            'desart' => $line->getDesart(),
+            'qteart' => $line->getQteart(),
+            'puht' => $line->getPuht(),
+            'puttc' => $line->getPuttc(),
+            'tauxtva'=> $line->getTauxtva(),
+            'remise' => $line->getRemise(),
+            'mttotal' => $line->getmttotal(),
+        ];
+      
+       
+    }
+
+    return $this->json($data);
+}
+
 
     #[Route('/open-folder/{clientCode}', name: 'open_folder')]
     public function openFolder(string $clientCode): Response
@@ -290,7 +388,7 @@ public function getBL(Request $request): Response
     
         $queryBuilder = $entityManager->createQueryBuilder()
             ->select('e')
-            ->from(Ebl::class, 'e')
+            ->from(Ebs::class, 'e')
             ->orderBy('e.datemvt', 'DESC');
             if ($codetrs) {
                 $queryBuilder
@@ -321,7 +419,7 @@ public function getBL(Request $request): Response
     
         $inovices = $queryBuilder->getQuery()->getResult();
     
-        return $this->render("admin/BL.html.twig", [
+        return $this->render("admin/BS.html.twig", [
             'inovices' => $inovices,
             'clients' => $clients,
             'selected_codetrs' => $codetrs,

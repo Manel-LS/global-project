@@ -225,14 +225,18 @@ ul {
     padding: 0px;
     margin: 0px;
 }
-
-
-#datatableFc thead th, #tableInovices thead th {
+.datatablefcdetails thead th {
+    background-color: #e8673c !important;
+    color: white !important;
+    text-align: center;
+ }
+#datatableFc  thead th, #datatableBs thead th, #tableInovices thead th {
     background-color: #0b51ab;
     color: white;
     text-align: center;
 
 }
+
 .title-banner {
     background-color: #c3c3ce;
    padding: 4px 10px;
