@@ -7,6 +7,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Repository\ClientRepository; // Ajoute cette ligne
+use App\Repository\UsersRepository;
 use App\Service\CartService;
 use App\Service\DynamicConnectionService;
 use App\Service\DynamicEntityManagerService;
@@ -24,13 +25,20 @@ class HomeController extends AbstractController
     {
         $this->dynamicEntityManagerService = $dynamicEntityManagerService;
     } 
+    // #[Route('/', name: 'app_home')]
+    // public function index(): Response
+    // {
+    //     return $this->render('admin/dashboard.html.twig', [
+           
+    //     ]);
+    // }
+
     #[Route('/', name: 'app_home')]
     public function index(): Response
     {
-        return $this->render('admin/dashboard.html.twig', [
-           
-        ]);
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+        return $this->render('admin/dashboard.html.twig');
     }
-
- 
 }
