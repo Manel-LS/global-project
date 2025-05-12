@@ -2,318 +2,350 @@
 
 {% block content %}
 <style>
-        .bg-blue {
-            --bs-table-bg: #ADD8E6 !important; 
-        }
-        .bg-pink {
-            --bs-table-bg: #FFC0CB  !important;
-        }
-        .table-responsive {
-            overflow-x: hidden;
-        }
-       /* Styles pour le tableau */
-#tableInovices {
-    width: 100% !important;
-    border-collapse: collapse;
-}
-
-#tableInovices th, #tableInovices td {
-    padding: 8px 12px;
-    border: 1px solid #dee2e6;
-}
-
-#tableInovices th {
-    background-color: #f8f9fa;
-    font-weight: bold;
-    text-align: left;
-}
-
-/* Styles pour les lignes groupées */
-.group-header {
-    background-color: #e9ecef !important;
-    font-weight: bold;
-}
-
-/* Styles pour les détails */
-.detail-row {
-    background-color: #f8f9fa;
-}
-
-.detail-row td {
-    padding-left: 40px !important;
-    font-size: 0.9em;
-    color: #555;
-}
-
-.detail-row .fa-caret-right {
-    color: #6c757d;
-    margin-right: 8px;
-}
-
-/* Couleurs spécifiques */
-.bg-blue {
-    background-color: #d1ecf1 !important;
-}
-
-.bg-pink {
-    background-color: #f8d7da !important;
-}
-
-.table-dark {
-    background-color: #343a40 !important;
-    color: white;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    #tableInovices td, #tableInovices th {
-        padding: 6px 8px;
-        font-size: 0.9em;
+    .bg-blue {
+        --bs-table-bg: #ADD8E6 !important; 
     }
-    
+    .bg-pink {
+        --bs-table-bg: #FFC0CB  !important;
+    }
+    /* Pour que le conteneur ne génère plus de scroll horizontal inutile */
+    .table-responsive {
+        overflow-x: visible;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Styles pour le tableau */
+    #tableInovices {
+        width: 100% !important;
+        border-collapse: collapse;
+        /* Suppression du min-width pour que le tableau s’ajuste à l’écran */
+        /* min-width: 1000px; */
+        table-layout: auto;
+    }
+    #tableInovices th, 
+    #tableInovices td {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        /* Autorise le retour à la ligne */
+        word-wrap: break-word;
+        white-space: normal;
+    }
+    #tableInovices th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    /* Styles pour les lignes groupées */
+    .group-header {
+        background-color: #e9ecef !important;
+        font-weight: bold;
+    }
+    /* Styles pour les détails */
+    .detail-row {
+        background-color: #f8f9fa;
+    }
     .detail-row td {
-        padding-left: 30px !important;
+        padding-left: 40px !important;
+        font-size: 0.9em;
+        color: #555;
     }
-}
-    </style>
+    .detail-row .fa-caret-right {
+        color: #6c757d;
+        margin-right: 8px;
+    }
+    /* Responsive styles */
+    @media (max-width: 1200px) {
+        #tableInovices th, #tableInovices td {
+            padding: 6px 8px;
+            font-size: 0.9em;
+        }
+    }
+    @media (max-width: 992px) {
+        .form-label {
+            min-width: 80px !important;
+        }
+        .col-md-4, .col-md-8 {
+            margin-bottom: 10px;
+        }
+        .d-flex.gap-3 {
+            flex-wrap: wrap;
+            gap: 10px !important;
+        }
+    }
+    @media (max-width: 768px) {
+        #tableInovices {
+            font-size: 0.85em;
+        }
+        #tableInovices th, #tableInovices td {
+            padding: 4px 6px;
+            font-size: 0.75rem;
+        }
+        .card-body {
+            padding: 10px;
+        }
+        .form-label {
+            min-width: 70px !important;
+            font-size: 0.9em;
+        }
+    }
+    @media (max-width: 576px) {
+        #tab-details .col-md-8 {
+            width: 100%;
+            padding: 0;
+        }
+        #tab-details .row > div {
+            padding: 5px;
+        }
+    }
+</style>
 
-    <div class="row column_title">
-        <div class="col-md-12">
-            <div class="page_title"></div>
-        </div>
-    </div>
-
+<div class="row column_title">
     <div class="col-md-12">
-        <div class="card shadow-sm">
-            <div class="card-header text-white">
-                <h5 class="mb-0">Relevé Clients</h5>
+  <div class="page_title">
+               <div class="title-banner">
+                  <h3 class="small-title">Home/Fiche Client</h3>
+               </div>
             </div>
-            <div class="card-body">
-                <form id="clientForm" method="POST" class="row g-3">
-                    <!-- Section Client -->
-                    <div id="clients-data" class="col-md-12" data-clients="">
-                        <div class="row align-items-center mb-3">
-                            <div class="col-md-4 d-flex align-items-center">
-                                <label for="codetrs" class="form-label mb-0 me-2" style="min-width: 100px;">Code</label>
-                                <select id="codetrs" name="codetrs" class="form-control form-control-sm select2" required>
-                                    <option value="">Sélectionner un client</option>
-                                    {% for client in clients %}
-                                        <option value="{{ client.code }}" data-name="{{ client.libelle }}">{{ client.code }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">Veuillez sélectionner un code client</div>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-center">
-                                <label for="libtrs" class="form-label mb-0 me-2" style="min-width: 100px;">Nom</label>
-                                <select id="libtrs" name="libtrs" class="form-control form-control-sm select2" required>
-                                    <option value="">Sélectionner un nom</option>
-                                    {% for client in clients %}
-                                        <option value="{{ client.libelle }}">{{ client.libelle }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="invalid-feedback">Veuillez sélectionner un nom de client</div>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-center justify-content-end">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="detailMouvement" id="detailMouvement" value="1" style="border: 2px solid #0d6efd;">
-                                    <label class="form-check-label" for="detailMouvement">Détail Mouvement</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-12">
-                        <div class="row align-items-center mb-3">
-                            <div class="col-md-4 d-flex align-items-center">
-                                <label for="startDate" class="form-label mb-0 me-2" style="min-width: 100px;">De</label>
-                                <input type="date" id="startDate" name="startDate" class="form-control form-control-sm" required>
-                                <div class="invalid-feedback">Veuillez sélectionner une date de début</div>
-                            </div>
-                            <div class="col-md-4 d-flex align-items-center">
-                                <label for="endDate" class="form-label mb-0 me-2" style="min-width: 100px;">À</label>
-                                <input type="date" id="endDate" name="endDate" class="form-control form-control-sm" required>
-                                <div class="invalid-feedback">Veuillez sélectionner une date de fin</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section Choix -->
-                    <div class="col-md-12">
-                        <div class="row align-items-center mb-3">
-                            <div class="col-md-1 d-flex align-items-center">
-                                <label for="choix" class="form-label mb-0 me-2" style="min-width: 100px;">Choix</label>
-                            </div>
-                            <div class="col-md-8">
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="choix" id="facture" value="facture" checked style="border: 2px solid #0d6efd;">
-                                        <label class="form-check-label" for="facture">Facture</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="choix" id="bl" value="BL" style="border: 2px solid #0d6efd;">
-                                        <label class="form-check-label" for="bl">Bon de Livraison</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="choix" id="bc" value="BC" style="border: 2px solid #0d6efd;">
-                                        <label class="form-check-label" for="bc">Bon de Commande</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="choix" id="bs" value="BS" style="border: 2px solid #0d6efd;">
-                                        <label class="form-check-label" for="bs">Bon de Sortie</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="choix" id="gl" value="GL" style="border: 2px solid #0d6efd;">
-                                        <label class="form-check-label" for="gl">Globale</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Section Type Fiche -->
-                    <div class="col-md-12">
-                        <div class="row align-items-center mb-3">
-                            <div class="col-md-1 d-flex align-items-center">
-                                <label for="typeFiche" class="form-label mb-0 me-2" style="min-width: 100px;">Type Fiche</label>
-                            </div>
-                            <div class="col-md-8">
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="typeFiche" id="dateMvt" value="Date" checked style="border: 2px solid #0d6efd;">
-                                        <label class="form-check-label" for="dateMvt">Date Mvt</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="typeFiche" id="echeance" value="Ech" style="border: 2px solid #0d6efd;">
-                                        <label class="form-check-label" for="echeance">Échéance</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="typeFiche" id="encaissement" value="Enc" style="border: 2px solid #0d6efd;">
-                                        <label class="form-check-label" for="encaissement">Encaissement</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bouton centré en bas du formulaire -->
-                    <div class="col-md-12 text-center mt-4">
-                        <button type="submit" id="submitButton" class="btn btn-secondary">Générer Fiche Client</button>
-                    </div>
-                </form>
-                <div id="message-container" class="mt-3 text-danger"></div>
-            </div>
-        </div>
     </div>
+</div>
 
-    <div class="col-md-12" style="margin-top:2rem;">
-        <div class="msg_list_main">
-            <div class="row">
-                <div class="card-body table-border-style">
-                    <div class="table-responsive">
-                        <table id="tableInovices" class="table table-bordered table-hover display" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th style="width: 10%;">Date Mvt</th>
-                                    <th style="width: 20%;">Mouvement</th>
-                                    <th style="width: 12%;">N° Facture</th>
-                                    <th style="width: 11%;">Banque</th>
-                                    <th style="width: 11%;">Échéance</th>
-                                    <th style="width: 11%;">Débit</th>
-                                    <th style="width: 10%;">Crédit</th>
-                                    <th style="width: 10%;">Solde</th>
-                                    <th style="width: 5%;">R</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-body">
-                                <!-- Dynamic table rows will be inserted here -->
-                            </tbody>
-                        </table>
-                        
-                        <div class="mt-4 " id="tab-details" style="display:none">
-                            <div class="row justify-content-center">
-                                <div class="col-md-8">
-                                    <div class="p-3 border bg-light">
-                                        <div class="row mt-2">
-                                            <div class="col-md-6 text-left">
-                                                <strong>Livraison Encours :</strong>
-                                            </div>
-                                            <div class="col-md-6 text-right">
-                                                <span id="livraisonEncours" class="font-weight-bold">0.000</span>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-2">
-                                            <div class="col-md-6 text-left">
-                                                <strong>Solde Global :</strong>
-                                            </div>
-                                            <div class="col-md-6 text-right">
-                                                <span id="soldeGlobale" class="font-weight-bold">0.000</span>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-2">
-                                            <div class="col-md-6 text-left">
-                                                <strong>MT Garantie :</strong>
-                                            </div>
-                                            <div class="col-md-6 text-right">
-                                                <span id="mtGarantie" class="font-weight-bold">0.000</span>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-2">
-                                            <div class="col-md-6 text-left">
-                                                <strong>MT Encours :</strong>
-                                            </div>
-                                            <div class="col-md-6 text-right">
-                                                <span id="mtEncours" class="font-weight-bold">0.000</span>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-2">
-                                            <div class="col-md-6 text-left">
-                                                <strong>MT Echu :</strong>
-                                            </div>
-                                            <div class="col-md-6 text-right">
-                                                <span id="mtEchu" class="font-weight-bold">0.000</span>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-2">
-                                            <div class="col-md-6 text-left">
-                                                <strong>Solde Impayé :</strong>
-                                            </div>
-                                            <div class="col-md-6 text-right">
-                                                <span id="soldeImpayer" class="font-weight-bold">0.000</span>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-2">
-                                            <div class="col-md-6 text-left">
-                                                <strong>MT Total Risque :</strong>
-                                            </div>
-                                            <div class="col-md-6 text-right">
-                                                <span id="mtTotalRisque" class="font-weight-bold">0.000</span>
-                                            </div>
-                                        </div>
-                                    </div>
+     <div class="card shadow-sm">
+        <div class="card-header text-white">
+            <h5 class="mb-0">Relevé Clients</h5>
+        </div>
+        <div class="card-body">
+            <form id="clientForm" method="POST" class="row g-3">
+                <!-- Section Client -->
+                <div id="clients-data" class="col-md-12" data-clients="">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-4 d-flex align-items-center">
+                            <label for="codetrs" class="form-label mb-0 me-2" style="min-width: 100px;">Code</label>
+                            <select id="codetrs" name="codetrs" class="form-control form-control-sm select2" required>
+                                <option value="">Sélectionner un client</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.code }}" data-name="{{ client.libelle }}">{{ client.code }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Veuillez sélectionner un code client</div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center">
+                            <label for="libtrs" class="form-label mb-0 me-2" style="min-width: 100px;">Nom</label>
+                            <select id="libtrs" name="libtrs" class="form-control form-control-sm select2" required>
+                                <option value="">Sélectionner un nom</option>
+                                {% for client in clients %}
+                                    <option value="{{ client.libelle }}">{{ client.libelle }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Veuillez sélectionner un nom de client</div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center justify-content-end">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="detailMouvement" id="detailMouvement" value="1" style="border: 2px solid #0d6efd;">
+                                <label class="form-check-label" for="detailMouvement">Détail Mouvement</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Dates -->
+                <div class="col-md-12">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-4 d-flex align-items-center">
+                            <label for="startDate" class="form-label mb-0 me-2" style="min-width: 100px;">De</label>
+                            <input type="date" id="startDate" name="startDate" class="form-control form-control-sm" required>
+                            <div class="invalid-feedback">Veuillez sélectionner une date de début</div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center">
+                            <label for="endDate" class="form-label mb-0 me-2" style="min-width: 100px;">À</label>
+                            <input type="date" id="endDate" name="endDate" class="form-control form-control-sm" required>
+                            <div class="invalid-feedback">Veuillez sélectionner une date de fin</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Choix -->
+                <div class="col-md-12">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-1 d-flex align-items-center">
+                            <label for="choix" class="form-label mb-0 me-2" style="min-width: 100px;">Choix</label>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="choix" id="facture" value="facture" checked style="border: 2px solid #0d6efd;">
+                                    <label class="form-check-label" for="facture">Facture</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="choix" id="bl" value="BL" style="border: 2px solid #0d6efd;">
+                                    <label class="form-check-label" for="bl">Bon de Livraison</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="choix" id="bc" value="BC" style="border: 2px solid #0d6efd;">
+                                    <label class="form-check-label" for="bc">Bon de Commande</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="choix" id="bs" value="BS" style="border: 2px solid #0d6efd;">
+                                    <label class="form-check-label" for="bs">Bon de Sortie</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="choix" id="gl" value="GL" style="border: 2px solid #0d6efd;">
+                                    <label class="form-check-label" for="gl">Globale</label>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Type Fiche -->
+                <div class="col-md-12">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-1 d-flex align-items-center">
+                            <label for="typeFiche" class="form-label mb-0 me-2" style="min-width: 100px;">Type Fiche</label>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="typeFiche" id="dateMvt" value="Date" checked style="border: 2px solid #0d6efd;">
+                                    <label class="form-check-label" for="dateMvt">Date Mvt</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="typeFiche" id="echeance" value="Ech" style="border: 2px solid #0d6efd;">
+                                    <label class="form-check-label" for="echeance">Échéance</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="typeFiche" id="encaissement" value="Enc" style="border: 2px solid #0d6efd;">
+                                    <label class="form-check-label" for="encaissement">Encaissement</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bouton -->
+                <div class="col-md-12 text-center mt-4">
+                    <button type="submit" id="submitButton" class="btn btn-secondary">Générer Fiche Client</button>
+                </div>
+            </form>
+            <div id="message-container" class="mt-3 text-danger"></div>
+        </div>
+ </div>
+
+<!-- Tableau des invoïces et détails -->
+<div class="table-responsive">
+    <table id="tableInovices" class="table table-bordered table-hover display" style="width:100%;">
+        <thead>
+            <tr>
+                <th style="width: 10%;">Date Mvt</th>
+                <th style="width: 20%;">Mouvement</th>
+                <th style="width: 12%;">N° Facture</th>
+                <th style="width: 11%;">Banque</th>
+                <th style="width: 11%;">Échéance</th>
+                <th style="width: 11%;">Débit</th>
+                <th style="width: 10%;">Crédit</th>
+                <th style="width: 10%;">Solde</th>
+                <th style="width: 5%;">R</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <!-- Les lignes seront insérées dynamiquement -->
+        </tbody>
+    </table>
+
+    <div class="mt-4" id="tab-details" style="display:none">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="p-3 border bg-light">
+                    <div class="row mt-2">
+                        <div class="col-md-6 text-left">
+                            <strong>Livraison Encours :</strong>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <span id="livraisonEncours" class="font-weight-bold">0.000</span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6 text-left">
+                            <strong>Solde Global :</strong>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <span id="soldeGlobale" class="font-weight-bold">0.000</span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6 text-left">
+                            <strong>MT Garantie :</strong>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <span id="mtGarantie" class="font-weight-bold">0.000</span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6 text-left">
+                            <strong>MT Encours :</strong>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <span id="mtEncours" class="font-weight-bold">0.000</span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6 text-left">
+                            <strong>MT Echu :</strong>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <span id="mtEchu" class="font-weight-bold">0.000</span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6 text-left">
+                            <strong>Solde Impayé :</strong>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <span id="soldeImpayer" class="font-weight-bold">0.000</span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6 text-left">
+                            <strong>MT Total Risque :</strong>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <span id="mtTotalRisque" class="font-weight-bold">0.000</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
-    <script src="../assets/extra-libs/DataTables/datatables.min.js"></script>
-    <script src="../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
-    <script src="../dist/js/custom.min.js"></script>
-    <!-- Ajout du script Select2 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<style>
+   @media (max-width: 768px) {
+      #tableInovices th, #tableInovices td {
+         font-size: 0.6rem;
+         padding: 0.1rem;
+      }
+   }
+   .dataTables_wrapper .dataTables_filter input {
+      font-size: 0.75rem;
+   }
+   table.dataTable {
+      width: 100% !important;
+   }
+   .select2-container .select2-selection--single {
+      height: 38px;
+   }
+</style>
 
-  <script>
-  $(document).ready(function() {
-     $('#libtrs, #codetrs').select2({ placeholder: "Choisir un client" });
 
-     var clients = {
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+<script src="../assets/extra-libs/DataTables/datatables.min.js"></script>
+<script src="../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+<script src="../dist/js/custom.min.js"></script>
+<!-- Ajout du script Select2 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#libtrs, #codetrs').select2({ placeholder: "Choisir un client" });
+
+    var clients = {
         {% for client in clients %}
             "{{ client.code }}": "{{ client.libelle }}",
         {% endfor %}
@@ -380,162 +412,158 @@
         });
     });
 
-    function formatNumber(num) {
-    // Retourne une chaîne vide pour les valeurs nulles ou zéro
-    if (num === null || num === undefined || num === 0 || num === '0' || num === '') return '';
-    // Formatage avec 3 décimales
-    return parseFloat(num).toFixed(3).replace('.', ',');
-}
+    function renderTable(response, showDetails) {
+        const $tbody = $('#table-body').empty();
+        $('#tab-details').show();
 
-function renderTable(response, showDetails) {
-    const $tbody = $('#table-body').empty();
-    $('#tab-details').show();
+        let soldeInitial = parseFloat(response.soldeini || 0);
+        let totalDebit = 0;
+        let totalCredit = 0;
+        let soldeActuel = soldeInitial;
 
-    let soldeInitial = parseFloat(response.soldeini || 0);
-    let totalDebit = 0;
-    let totalCredit = 0;
-    let soldeActuel = soldeInitial;
+        // 1. Filtrer les données non vides
+        const baseData = response.selectionData.filter(item => 
+            item && item.num && item.datemvt
+        );
 
-    // 1. Filtrer les données non vides
-    const baseData = response.selectionData.filter(item => 
-        item && item.num && item.datemvt
-    );
-
-    // 2. Grouper par date et numéro
-    const groupedData = {};
-    
-    baseData.forEach(item => {
-        const key = `${item.datemvt}|${item.num}`;
-        if (!groupedData[key]) {
-            groupedData[key] = {
-                items: [],
-                totalDebit: 0,
-                totalCredit: 0,
-                details: []
-            };
-        }
-        const montant = parseFloat(item.montant || 0);
-        const montant1 = parseFloat(item.montant1 || 0);
+        // 2. Grouper par date et numéro
+        const groupedData = {};
         
-        groupedData[key].items.push(item);
-        groupedData[key].totalDebit += montant;
-        groupedData[key].totalCredit += montant1;
-    });
-
-    // 3. Associer les détails correspondants exacts
-    if (showDetails && response.detailData) {
-        response.detailData.forEach(detail => {
-            if (!detail || !detail.num) return;
+        baseData.forEach(item => {
+            const key = `${item.datemvt}|${item.num}`;
+            if (!groupedData[key]) {
+                groupedData[key] = {
+                    items: [],
+                    totalDebit: 0,
+                    totalCredit: 0,
+                    details: []
+                };
+            }
+            const montant = parseFloat(item.montant || 0);
+            const montant1 = parseFloat(item.montant1 || 0);
             
-            const key = Object.keys(groupedData).find(k => k.split('|')[1] === detail.num);
-            if (key && detail.codeart && detail.designation) {
-                groupedData[key].details.push(detail);
+            groupedData[key].items.push(item);
+            groupedData[key].totalDebit += montant;
+            groupedData[key].totalCredit += montant1;
+        });
+
+        // 3. Associer les détails correspondants exacts
+        if (showDetails && response.detailData) {
+            response.detailData.forEach(detail => {
+                if (!detail || !detail.num) return;
+                
+                const key = Object.keys(groupedData).find(k => k.split('|')[1] === detail.num);
+                if (key && detail.codeart && detail.designation) {
+                    groupedData[key].details.push(detail);
+                }
+            });
+        }
+
+        // 4. Afficher les données groupées
+        Object.keys(groupedData).forEach(key => {
+            const [date, num] = key.split('|');
+            const group = groupedData[key];
+            const firstItem = group.items[0];
+
+            const diff = group.totalDebit - group.totalCredit;
+            soldeActuel += diff;
+            totalDebit += group.totalDebit;
+            totalCredit += group.totalCredit;
+
+            let rowClass = '';
+            if (/AV N°|Avoir/i.test(firstItem.libelle)) rowClass = 'bg-blue';
+            if (/RG N°|Règlement/i.test(firstItem.libelle)) rowClass = 'bg-pink';
+
+             $tbody.append(`
+                <tr class="${rowClass}">
+                  <td><strong>${date || ''}</strong></td>
+                        <td><strong>${firstItem.libelle || ''}</strong></td>
+                    <td>${num || ''}</td>
+                    <td>${firstItem.libcaisse || ''}</td>
+                    <td>${firstItem.echeance || ''}</td>
+                    <td class="text-center">${formatNumber(group.totalDebit)}</td>
+                    <td class="text-center">${formatNumber(group.totalCredit)}</td>
+                    <td class="text-center">${formatNumber(soldeActuel)}</td>
+                    <td class="text-center">${firstItem.solde1 === 0 ? 'O' : firstItem.solde1 === 1 ? 'N' : ''}</td>
+                </tr>
+            `);
+
+             if (showDetails && group.details.length > 0) {
+                group.details.forEach(detail => {
+                    $tbody.append(`
+                        <tr class="detail-row">
+                            <td>  <i class="fas fa-caret-right mr-2"></i>${detail.codeart || ''}</td>
+                            <td>
+                               
+                                ${detail.designation ? ' - ' + detail.designation : ''}
+                            </td> <td>  ${detail.qteart || ''}</td>
+                            <td>  ${detail.puttc || ''}</td>
+                             <td>  ${detail.mttotal || ''}</td>
+                            <td colspan="4"></td>
+                        </tr>
+                    `);
+                });
+            }
+        });
+
+         $tbody.append(`
+            <tr class="table-dark">
+                <td colspan="5" class="text-center"><strong>Totaux</strong></td>
+                <td class="text-center"><strong>${formatNumber(totalDebit) || '-'}</strong></td>
+                <td class="text-center"><strong>${formatNumber(totalCredit) || '-'}</strong></td>
+                <td class="text-center"><strong>${formatNumber(soldeActuel) || '-'}</strong></td>
+                <td class="text-center">-</td>
+            </tr>
+        `);
+
+        // Mise à jour des totaux du bas
+        updateSummary(response, soldeActuel);
+        initDataTable();
+    }
+
+    function updateSummary(response, soldeActuel) {
+         const formatOrHide = (value) => {
+            if (value === null || value === undefined || value === 0 || value === '0') return '0.000';
+            return parseFloat(value).toFixed(3).replace('.', ',');
+        };
+
+         $('#livraisonEncours').text(formatOrHide(response.livEncours));
+        $('#soldeGlobale').text(formatOrHide(soldeActuel + (response.livraisonEncours || 0)));
+        $('#mtGarantie').text(formatOrHide(response.mtchqGarClient));
+        $('#mtEncours').text(formatOrHide(response.mtencour));
+        $('#mtEchu').text(formatOrHide(response.mtechu));
+        $('#soldeImpayer').text(formatOrHide(response.mtsoldeImpayer));
+        $('#mtTotalRisque').text(formatOrHide(response.mtTotalRisque));
+    }
+
+    function initDataTable() {
+        if ($.fn.DataTable.isDataTable('#tableInovices')) {
+            $('#tableInovices').DataTable().destroy();
+        }
+        
+        $('#tableInovices').DataTable({
+            paging: false,
+            searching: true,
+            info: false,
+            responsive: true,
+            scrollX: false,
+            language: {
+                search: "Rechercher :",
+                zeroRecords: "Aucun enregistrement correspondant trouvé"
+            },
+            initComplete: function() {
+                hideEmptyCells();
             }
         });
     }
 
-    // 4. Afficher les données groupées
-    Object.keys(groupedData).forEach(key => {
-        const [date, num] = key.split('|');
-        const group = groupedData[key];
-        const firstItem = group.items[0];
-
-        const diff = group.totalDebit - group.totalCredit;
-        soldeActuel += diff;
-        totalDebit += group.totalDebit;
-        totalCredit += group.totalCredit;
-
-        let rowClass = '';
-        if (/AV N°|Avoir/i.test(firstItem.libelle)) rowClass = 'bg-blue';
-        if (/RG N°|Règlement/i.test(firstItem.libelle)) rowClass = 'bg-pink';
-
-         $tbody.append(`
-            <tr class="${rowClass}">
-              <td><strong>${date || ''}</strong></td>
-                    <td><strong>${firstItem.libelle || ''}</strong></td>
-                <td>${num || ''}</td>
-                <td>${firstItem.libcaisse || ''}</td>
-                <td>${firstItem.echeance || ''}</td>
-                <td class="text-center">${formatNumber(group.totalDebit)}</td>
-                <td class="text-center">${formatNumber(group.totalCredit)}</td>
-                <td class="text-center">${formatNumber(soldeActuel)}</td>
-                <td class="text-center">${firstItem.solde1 === 0 ? 'O' : firstItem.solde1 === 1 ? 'N' : ''}</td>
-            </tr>
-        `);
-
-         if (showDetails && group.details.length > 0) {
-            group.details.forEach(detail => {
-                $tbody.append(`
-                    <tr class="detail-row">
-                        <td>  <i class="fas fa-caret-right mr-2"></i>${detail.codeart || ''}</td>
-                        <td>
-                           
-                            ${detail.designation ? ' - ' + detail.designation : ''}
-                        </td> <td>  ${detail.qteart || ''}</td>
-                        <td>  ${detail.puttc || ''}</td>
-                         <td>  ${detail.mttotal || ''}</td>
-                        <td colspan="4"></td>
-                    </tr>
-                `);
-            });
-        }
-    });
-
-     $tbody.append(`
-        <tr class="table-dark">
-            <td colspan="5" class="text-center"><strong>Totaux</strong></td>
-            <td class="text-center"><strong>${formatNumber(totalDebit) || '-'}</strong></td>
-            <td class="text-center"><strong>${formatNumber(totalCredit) || '-'}</strong></td>
-            <td class="text-center"><strong>${formatNumber(soldeActuel) || '-'}</strong></td>
-            <td class="text-center">-</td>
-        </tr>
-    `);
-
-    // Mise à jour des totaux du bas
-    updateSummary(response, soldeActuel);
-    initDataTable();
-}
-function updateSummary(response, soldeActuel) {
-     const formatOrHide = (value) => {
-        if (value === null || value === undefined || value === 0 || value === '0') return '0.000';
-        return parseFloat(value).toFixed(3).replace('.', ',');
-    };
-
-     $('#livraisonEncours').text(formatOrHide(response.livEncours));
-    $('#soldeGlobale').text(formatOrHide(soldeActuel + (response.livraisonEncours || 0)));
-    $('#mtGarantie').text(formatOrHide(response.mtchqGarClient));
-    $('#mtEncours').text(formatOrHide(response.mtencour));
-    $('#mtEchu').text(formatOrHide(response.mtechu));
-    $('#soldeImpayer').text(formatOrHide(response.mtsoldeImpayer));
-    $('#mtTotalRisque').text(formatOrHide(response.mtTotalRisque));
-}
-// Fonction pour masquer les cellules vides
-function hideEmptyCells() {
-    $('#tableInovices td').each(function() {
-        if ($(this).text().trim() === '' || $(this).text().trim() === '0,000') {
-            $(this).html('&nbsp;'); // Remplace par un espace insécable
-        }
-    });
-}
-
-// Appeler cette fonction après l'initialisation de DataTable
-function initDataTable() {
-    if ($.fn.DataTable.isDataTable('#tableInovices')) {
-        $('#tableInovices').DataTable().destroy();
+    function hideEmptyCells() {
+        $('#tableInovices td').each(function() {
+            if ($(this).text().trim() === '' || $(this).text().trim() === '0,000') {
+                $(this).html('&nbsp;');
+            }
+        });
     }
-    $('#tableInovices').DataTable({
-        paging: false,
-        searching: true,
-        info: false,
-        language: {
-            search: "Rechercher :",
-            zeroRecords: "Aucun enregistrement correspondant trouvé"
-        },
-        initComplete: function() {
-            hideEmptyCells();
-        }
-    });
-}
 });
 </script>
 {% endblock %}

@@ -1,128 +1,123 @@
-  <!-- Sidebar  -->
-  <nav id="sidebar">
-    <div class="sidebar_blog_1">
-       <div class="sidebar-header">
-           
-       </div>
-       <div class="sidebar_user_info">
-          <div class="icon_setting"></div>
-          <div class="user_profle_side">
-             <div class="user_img">
-<img class="img-responsive" src="https://ui-avatars.com/api/?name={{ app.user ? app.user.libelle : 'Guest' }}" alt="Avatar">
-             </div>
-             <div class="user_info">
-               {% if app.user %}
-               <h6>{{ app.user.libelle }}</h6>
-              {% else %} <p>Aucun utilisateur connecté</p>
-               {% endif %}
-                <p><span class="online_animation"></span> Online</p>
-             </div>
-          </div>
-       </div>
+<!-- Sidebar  -->
+<nav id="sidebar">
+  <div class="sidebar_blog_1">
+    <div class="sidebar-header"></div>
+    <div class="sidebar_user_info">
+      <div class="icon_setting"></div>
+      <div class="user_profle_side">
+        <div class="user_img">
+          <img class="img-responsive" src="https://ui-avatars.com/api/?name={{ app.user ? app.user.libelle : 'Guest' }}" alt="Avatar">
+        </div>
+        <div class="user_info">
+          {% if app.user %}
+            <h6>{{ app.user.libelle }}</h6>
+          {% else %}
+            <p>Aucun utilisateur connecté</p>
+          {% endif %}
+          <p><span class="online_animation"></span> Online</p>
+        </div>
+      </div>
     </div>
-    <div class="sidebar_blog_2">
-       <ul class="list-unstyled components">
-         
-              <li class="{{ app.request.attributes.get('_route') == 'fiche_client' ? 'active' : '' }}">
-               <a href="{{ path('fiche_client') }}">
-                   <i class="fas fa-file-invoice-dollar" style="color: #6666ef;"></i>
-                   <span>Fiche Client</span>
-               </a>
-           </li> 
-           <li class="{{ app.request.attributes.get('_route') == 'stock' ? 'active' : '' }}">
-               <a href="{{ path('stock') }}">
-                   <i class="fas fa-box" style="color: #6666ef;"></i>
-                   <span>Stock</span>
-               </a>
-           </li>
-            <li class="{{ app.request.attributes.get('_route') == 'ech_client' ? 'active' : '' }}">
-               <a href="{{ path('ech_client') }}">
-                  <i class="fas fa-calendar-alt" style="color: #6666ef;"></i>
-                   <span>Echéancier Clients</span>
-               </a>
-           </li>{# Liste des routes qui doivent ouvrir ce sous-menu #}
-{% set consultationRoutes = ['get_fc', 'get_fa', 'get_bl', 'get_bs','reglement'] %}
-{% set currentRoute = app.request.attributes.get('_route') %}
-{% set isConsultationActive = currentRoute in consultationRoutes %}
+  </div>
 
-<li class="{{ isConsultationActive ? 'active' : '' }}">
-    <a href="#consultationSubmenu" 
-       data-toggle="collapse" 
-       aria-expanded="{{ isConsultationActive ? 'true' : 'false' }}" 
-       class="dropdown-toggle">
-        <i class="fas fa-folder-open" style="color: #6666ef;"></i>
-        <span>Consultation Pièce Client</span>
-    </a>
+  <div class="sidebar_blog_2">
+    <ul class="list-unstyled components">
 
-    <ul class="collapse list-unstyled {{ isConsultationActive ? 'show' : '' }}" id="consultationSubmenu">
-        <li class="{{ currentRoute == 'get_fc' ? 'active' : '' }}">
+      <li class="{{ app.request.attributes.get('_route') == 'fiche_client' ? 'active' : '' }}">
+        <a href="{{ path('fiche_client') }}">
+          <i class="fas fa-file-invoice-dollar" style="color: #6666ef;"></i>
+          <span>Fiche Client</span>
+        </a>
+      </li>
+
+      <li class="{{ app.request.attributes.get('_route') == 'stock' ? 'active' : '' }}">
+        <a href="{{ path('stock') }}">
+          <i class="fas fa-box" style="color: #6666ef;"></i>
+          <span>Stock</span>
+        </a>
+      </li>
+
+      <li class="{{ app.request.attributes.get('_route') == 'ech_client' ? 'active' : '' }}">
+        <a href="{{ path('ech_client') }}">
+          <i class="fas fa-calendar-alt" style="color: #6666ef;"></i>
+          <span>Echéancier Clients</span>
+        </a>
+      </li>
+
+      {# Routes Consultation #}
+      {% set consultationRoutes = ['get_fc', 'get_fa', 'get_bl', 'get_bs','reglement'] %}
+      {% set currentRoute = app.request.attributes.get('_route') %}
+      {% set isConsultationActive = currentRoute in consultationRoutes %}
+
+      <li class="{{ isConsultationActive ? 'active' : '' }}">
+        <a href="#consultationSubmenu" data-toggle="collapse" aria-expanded="{{ isConsultationActive ? 'true' : 'false' }}" class="dropdown-toggle">
+          <i class="fas fa-folder-open" style="color: #6666ef;"></i>
+          <span>Consultation Pièce Client</span>
+        </a>
+
+        <ul class="collapse list-unstyled {{ isConsultationActive ? 'show' : '' }}" id="consultationSubmenu">
+          <li class="{{ currentRoute == 'get_fc' ? 'active' : '' }}">
             <a href="{{ path('get_fc') }}">
-                <i class="fas fa-file-alt" style="color: #4caf50;"></i>
-                <span>FC</span>
+              <i class="fas fa-file-alt" style="color: #4caf50;"></i>
+              <span>FC</span>
             </a>
-        </li>
-        <li class="{{ currentRoute == 'get_fa' ? 'active' : '' }}">
+          </li>
+          <li class="{{ currentRoute == 'get_fa' ? 'active' : '' }}">
             <a href="{{ path('get_fa') }}">
-                <i class="fas fa-file-invoice-dollar" style="color: #2196f3;"></i>
-                <span>FA</span>
+              <i class="fas fa-file-invoice-dollar" style="color: #2196f3;"></i>
+              <span>FA</span>
             </a>
-        </li>
-        <li class="{{ currentRoute == 'get_bl' ? 'active' : '' }}">
+          </li>
+          <li class="{{ currentRoute == 'get_bl' ? 'active' : '' }}">
             <a href="{{ path('get_bl') }}">
-                <i class="fas fa-file-contract" style="color: #ff9800;"></i>
-                <span>BL</span>
+              <i class="fas fa-file-contract" style="color: #ff9800;"></i>
+              <span>BL</span>
             </a>
-        </li>
-        <li class="{{ currentRoute == 'get_bs' ? 'active' : '' }}">
+          </li>
+          <li class="{{ currentRoute == 'get_bs' ? 'active' : '' }}">
             <a href="{{ path('get_bs') }}">
-                <i class="fas fa-file-signature" style="color: #9c27b0;"></i>
-                <span>BS</span>
+              <i class="fas fa-file-signature" style="color: #9c27b0;"></i>
+              <span>BS</span>
             </a>
-        </li>
-      <li class="{{ currentRoute == 'reglement' ? 'active' : '' }}">
+          </li>
+          <li class="{{ currentRoute == 'reglement' ? 'active' : '' }}">
             <a href="{{ path('reglement') }}">
-                <i class="fas fa-hand-holding-usd" style="color: #ff5722;"></i> <!-- Nouvelle icône pour Règlement -->
-                <span>Règlement</span> <!-- Titre plus explicite -->
+              <i class="fas fa-hand-holding-usd" style="color: #ff5722;"></i>
+              <span>Règlement</span>
             </a>
-        </li>
-            
-    </ul>
-</li>
-  <li class="{{ app.request.attributes.get('_route') == 'app_order' ? 'active' : '' }}">
-               <a href="{{ path('app_order') }}">
-                  <i class="fas fa-table" style="color: #6666ef;"></i>
-                   <span>Ajouter Commande</span>
-               </a>
-           </li>
+          </li>
+        </ul>
+      </li>
 
-     <li>
+      <li class="{{ app.request.attributes.get('_route') == 'app_order' ? 'active' : '' }}">
+        <a href="{{ path('app_order') }}">
+          <i class="fas fa-table" style="color: #6666ef;"></i>
+          <span>Ajouter Commande</span>
+        </a>
+      </li>
+
       <li class="{{ app.request.attributes.get('_route') == 'bon_de_commandes' ? 'active' : '' }}">
-               <a href="{{ path('bon_de_commandes') }}">
-                  <i class="fas fa-file-invoice-dollar" style="color: #6666ef;"></i>
-                           <span>bons de commandes</span></a>
+        <a href="{{ path('bon_de_commandes') }}">
+          <i class="fas fa-file-invoice-dollar" style="color: #6666ef;"></i>
+          <span>Bons de Commandes</span>
+        </a>
+      </li>
 
-           </li>
-
-
-
-         {# <li class="{{ app.request.attributes.get('_route') == 'ech_client_fa' ? 'active' : '' }}">
-            <a href="{{ path('ech_client') }}">FA</a>
-        </li>
-        <li class="{{ app.request.attributes.get('_route') == 'ech_client_bl' ? 'active' : '' }}">
-            <a href="{{ path('ech_client') }}">BL</a>
-        </li>
-        <li class="{{ app.request.attributes.get('_route') == 'ech_client_bs' ? 'active' : '' }}">
-            <a href="{{ path('ech_client') }}">BS</a>
-        </li>
-        <li class="{{ app.request.attributes.get('_route') == 'ech_client_reglement' ? 'active' : '' }}">
-            <a href="{{ path('ech_client') }}">Règlement</a>
-        </li> #}
     </ul>
-</li>
+  </div>
+</nav>
+<!-- end sidebar -->
+<style>
+ #sidebar ul ul li a {
+  padding-left: 30px;
+  color: #ffffff;
+  background-color: transparent;
+  transition: background-color 0.3s ease;
+}
 
-          
-       
-       </ul>
-    </div>
- </nav>
- <!-- end sidebar -->
+ #sidebar ul ul li.active > a {
+  background-color: #96d5b7 !important;
+  color: #fff !important;
+  font-weight: bold;
+ }
+</style>

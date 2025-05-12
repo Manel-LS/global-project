@@ -1,262 +1,245 @@
 {% extends 'base.html.twig' %}
 
 {% block content %}
-
+<div class="container-fluid">
+   <!-- Titre de page -->
+   <div class="row column_title">
+      <div class="col-md-12">
+  <div class="page_title">
+               <div class="title-banner">
+                  <h3 class="small-title">Home/Stock</h3>
+               </div>
+            </div>
+        </div>
+   </div>
  
-               <div class="container-fluid">
-                  <div class="row column_title">
-                     <div class="col-md-12">
-                        <div class="page_title">
-                         </div>
-                     </div>
-                  </div>
-
-                  <div class="col-md-12">
-                     <div class="card shadow-sm">
-                        <div class="card-header text-white">
-                           <h5 class="mb-0">Filtrer</h5>
+   <!-- Carte des filtres -->
+       <div class="card shadow-sm">
+         <div class="card-header text-white">
+            <h5 class="mb-0">Filtrer</h5>
+         </div>
+         <div class="card-body">
+            <form class="row g-3">
+               <div class="col-md-10">
+                  <div class="mb-3">
+                     <label for="filterCodeRep" class="form-label">Dépôt</label>
+                     <div class="row g-2">
+                        <div class="col-md-6">
+                           <select id="filterCodeRep" class="form-select select2">
+                              <option value="" disabled selected>Choisir un code dépôt</option>
+                              {% for depot in depots %}
+                                 <option value="{{ depot.code }}" data-libelle="{{ depot.libelle }}">{{ depot.code }}</option>
+                              {% endfor %}
+                           </select>
                         </div>
-                        <div class="card-body">
-                           <form class="row g-3">
-
-    <!-- Bloc des inputs (gauche) -->
-    <div class="col-md-10">
-        <!-- Dépôt -->
-        <div class="mb-3">
-            <label for="filterCodeRep" class="form-label">Dépôt</label>
-            <div class="row g-2">
-                <div class="col-md-6">
-                    <select id="filterCodeRep" class="form-select select2">
-                        <option value="" disabled selected>Choisir un code dépôt</option>
-                        {% for depot in depots %}
-                            <option value="{{ depot.code }}" data-libelle="{{ depot.libelle }}">{{ depot.code }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <select id="filterLibRep" class="form-select select2">
-                        <option value="" disabled selected>Choisir un libellé dépôt</option>
-                        {% for depot in depots %}
-                            <option value="{{ depot.libelle }}">{{ depot.libelle }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- Article -->
-        <div>
-            <label for="filterCodeArt" class="form-label">Article</label>
-            <div class="row g-2">
-                <div class="col-md-6">
-                    <select id="filterCodeArt" class="form-select select2">
-                        <option value="" disabled selected>Choisir un code article</option>
-                        {% for article in articles %}
-                            <option value="{{ article.code }}">{{ article.code }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <select id="filterDesArt" class="form-select select2">
-                        <option value="" disabled selected>Choisir une désignation</option>
-                        {% for article in articles %}
-                            <option value="{{ article.libelle }}">{{ article.libelle }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bloc du bouton (droite) -->
-    <div class="col-md-2 d-flex justify-content-end align-items-center">
-        <button id="resetFilters" class="btn btn-secondary w-100">Réinitialiser</button>
-    </div>
-
-</form>
-
+                        <div class="col-md-6">
+                           <select id="filterLibRep" class="form-select select2">
+                              <option value="" disabled selected>Choisir un libellé dépôt</option>
+                              {% for depot in depots %}
+                                 <option value="{{ depot.libelle }}">{{ depot.libelle }}</option>
+                              {% endfor %}
+                           </select>
                         </div>
                      </div>
                   </div>
 
-                  <div class="col-md-12 mt-4">
-                     <div class="card shadow-sm">
-                        <div class="card-body table-responsive">
-                           <table id="tableClients" class="table table-bordered table-hover display" style="width:100%">
-                              <thead>
-                                <tr>
-                                    <th style="width: 4%; text-align: center;">Code</th>
-                                    <th style="width: 17%;">Libellé Dép</th>
-                                    <th style="width: 12%;">Code Article</th>
-                                    <th style="width: 25%;">Désignation</th>
-                                    <th style="width: 9%;">Quantité</th>
-                                    <th style="width: 8%;">Unité</th>   
-                                    <th style="width: 12%;">Prix HT</th>   
-                                    <th style="width: 18%;">Prix TTC</th> 
-                                    
-                                 </tr>
-                              </thead>
-                              <tbody>
-                                 {% for item in stock %}
-                                 <tr>
-                                    <td style="text-align: center; ">{{ item.codedep }}</td>
-                                    <td>{{ item.libdep }}</td>
-                                    <td style="text-align: center; ">{{ item.codeart }}</td>
-                                    <td>{{ item.desart }}</td>
-                                    <td style="text-align: center; ">{{ item.qteart }}</td>
-                                    <td style="text-align: center; ">{{ item.unite }}</td>
-                                    <td style="text-align: center; ">{{ item.prixvht1 }}</td>
-                                    <td style="text-align: center; ">{{ item.prixvttc1 }}</td>
-
-                                      
-                                 </tr>
-                                 {% else %}
-                                 <tr>
-                                    <td colspan="5" class="text-center">Aucun article en stock disponible.</td>
-                                 </tr>
-                                 {% endfor %}
-                              </tbody>
-                           </table>
+                  <div>
+                     <label for="filterCodeArt" class="form-label">Article</label>
+                     <div class="row g-2">
+                        <div class="col-md-6">
+                           <select id="filterCodeArt" class="form-select select2">
+                              <option value="" disabled selected>Choisir un code article</option>
+                              {% for article in articles %}
+                                 <option value="{{ article.code }}">{{ article.code }}</option>
+                              {% endfor %}
+                           </select>
+                        </div>
+                        <div class="col-md-6">
+                           <select id="filterDesArt" class="form-select select2">
+                              <option value="" disabled selected>Choisir une désignation</option>
+                              {% for article in articles %}
+                                 <option value="{{ article.libelle }}">{{ article.libelle }}</option>
+                              {% endfor %}
+                           </select>
                         </div>
                      </div>
                   </div>
                </div>
-            </div>
+               <div class="col-md-2 d-flex justify-content-end align-items-center">
+                  <button id="resetFilters" class="btn btn-secondary w-100">Réinitialiser</button>
+               </div>
+            </form>
+         </div>
+   </div>
+   <table id="tableClients" class="table table-bordered table-hover" style="width:100%;">
+               <thead>
+                  <tr>
+                     <th style="width: 5%;">Code</th>
+                     <th style="width: 13%;">Libellé Dép</th>
+                     <th style="width: 13%;">Code Article</th>
+                     <th style="width: 20%;">Désignation</th>
+                     <th style="width: 8%;">Qte</th>
+                     <th style="width: 8%;">Unité</th>
+                     <th style="width: 12%;">Prix HT</th>
+                     <th style="width: 10%;">Prix TTC</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  {% for item in stock %}
+                     <tr>
+                        <td class="text-center">{{ item.codedep }}</td>
+                        <td>{{ item.libdep }}</td>
+                        <td class="text-center">{{ item.codeart }}</td>
+                        <td>{{ item.desart }}</td>
+                        <td class="text-center">{{ item.qteart }}</td>
+                        <td class="text-center">{{ item.unite }}</td>
+                        <td class="text-center">{{ item.prixvht1 }}</td>
+                        <td class="text-center">{{ item.prixvttc1 }}</td>
+                     </tr>
+                  {% else %}
+                     <tr>
+                        <td colspan="8" class="text-center">Aucun article en stock disponible.</td>
+                     </tr>
+                  {% endfor %}
+               </tbody>
+            </table>
+   <!-- Tableau -->
+   <div class="col-md-12 mt-3">
+      <div class="card shadow-sm">
+         <div class="card-body">
+         
          </div>
       </div>
    </div>
-   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-   <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
-   <script src="../assets/extra-libs/DataTables/datatables.min.js"></script>
-   <script src="../assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
-   <script src="../dist/js/custom.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+</div>
 
-   <script>
-      $(document).ready(function () {
-          // Initialisation de Select2
-          $('.select2').select2();
+<!-- STYLES -->
+<style>
+   @media (max-width: 768px) {
+      #tableClients th, #tableClients td {
+         font-size: 0.6rem;
+         padding: 0.1rem;
+      }
+   }
 
-          // Variables pour éviter les changements récursifs
-          let isChanging = false;
+   .dataTables_wrapper .dataTables_filter input {
+      font-size: 0.75rem;
+   }
 
-          // Données des dépôts et articles pour les correspondances
-          var depots = {
-              {% for depot in depots %}
-                  "{{ depot.code }}" : "{{ depot.libelle }}",
-              {% endfor %}
-          };
+   table.dataTable {
+      width: 100% !important;
+       }
+ 
+div#tableClients_wrapper {
+    margin-top: 50px;
+}
+   .select2-container .select2-selection--single {
+      height: 38px;
+   }
+</style>
 
-          var articles = {
-              {% for article in articles %}
-                  "{{ article.code }}" : "{{ article.libelle }}",
-              {% endfor %}
-          };
+<!-- SCRIPTS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
-          // Fonction pour mettre en place les filtres
-          function setupFilters() {
-              const filterCodeRep = $('#filterCodeRep');
-              const filterLibRep = $('#filterLibRep');
-              const filterCodeArt = $('#filterCodeArt');
-              const filterDesArt = $('#filterDesArt');
-              const resetFilters = $('#resetFilters');
+<script>
+   $(document).ready(function () {
+      $('.select2').select2();
 
-              // Filtrage dynamique par Code Dép et Libellé Dép
-              filterCodeRep.on('change', function () {
-                  if (isChanging) return;
-                  isChanging = true;
+      const depots = {
+         {% for depot in depots %}"{{ depot.code }}": "{{ depot.libelle }}",{% endfor %}
+      };
+      const articles = {
+         {% for article in articles %}"{{ article.code }}": "{{ article.libelle }}",{% endfor %}
+      };
 
-                  const selectedCodeRep = $(this).val();
-                  filterLibRep.val(depots[selectedCodeRep]).trigger('change');
-                  dataTable.column(0).search(selectedCodeRep).draw();
+      const filterCodeRep = $('#filterCodeRep');
+      const filterLibRep = $('#filterLibRep');
+      const filterCodeArt = $('#filterCodeArt');
+      const filterDesArt = $('#filterDesArt');
+      const resetFilters = $('#resetFilters');
 
-                  isChanging = false;
-              });
-
-              filterLibRep.on('change', function () {
-                  if (isChanging) return;
-                  isChanging = true;
-
-                  const selectedLibRep = $(this).val();
-                  for (let code in depots) {
-                      if (depots[code] === selectedLibRep) {
-                          filterCodeRep.val(code).trigger('change');
-                          break;
-                      }
-                  }
-                  dataTable.column(1).search(selectedLibRep).draw();
-
-                  isChanging = false;
-              });
-
-              // Filtrage dynamique par Code Article et Désignation
-              filterCodeArt.on('change', function () {
-                  if (isChanging) return;
-                  isChanging = true;
-
-                  const selectedCodeArt = $(this).val();
-                  filterDesArt.val(articles[selectedCodeArt]).trigger('change');
-                  dataTable.column(2).search(selectedCodeArt).draw();
-
-                  isChanging = false;
-              });
-
-              filterDesArt.on('change', function () {
-                  if (isChanging) return;
-                  isChanging = true;
-
-                  const selectedDesArt = $(this).val();
-                  for (let code in articles) {
-                      if (articles[code] === selectedDesArt) {
-                          filterCodeArt.val(code).trigger('change');
-                          break;
-                      }
-                  }
-                  dataTable.column(3).search(selectedDesArt).draw();
-
-                  isChanging = false;
-              });
-
-              // Réinitialiser les filtres
-              resetFilters.on('click', function (e) {
-                  e.preventDefault();
-                  filterCodeRep.val('').trigger('change');
-                  filterLibRep.val('').trigger('change');
-                  filterCodeArt.val('').trigger('change');
-                  filterDesArt.val('').trigger('change');
-                  dataTable.search('').columns().search('').draw();
-              });
-          }
-
-          // Initialisation du DataTable
-          var dataTable = $('#tableClients').DataTable({
-              paging: true,
-              searching: true,
-              info: true,
-              order: [], // Désactiver les flèches de tri par défaut
-              language: {
-                  sEmptyTable: "Aucune donnée disponible dans le tableau",
-                  sInfo: "Affichage de _START_ à _END_ sur _TOTAL_ entrées",
-                  sInfoEmpty: "Affichage de 0 à 0 sur 0 entrées",
-                  sInfoFiltered: "(filtré de _MAX_ entrées au total)",
-                  sLengthMenu: "Afficher _MENU_ entrées",
-                  sLoadingRecords: "Chargement...",
-                  sProcessing: "Traitement...",
-                  sSearch: "Rechercher :",
-                  sZeroRecords: "Aucun enregistrement correspondant trouvé",
-                  oPaginate: {
-                      sFirst: "Premier",
-                      sLast: "Dernier",
-                      sNext: "Suivant",
-                      sPrevious: "Précédent"
-                  }
-              }
-          });
-
-          // Appel de la fonction setupFilters pour initialiser les filtres
-          setupFilters();
+      const dataTable = $('#tableClients').DataTable({
+         paging: true,
+         searching: true,
+         info: true,
+         order: [],
+         language: {
+            sEmptyTable: "Aucune donnée disponible",
+            sInfo: "Affichage _START_ à _END_ sur _TOTAL_",
+            sInfoEmpty: "Affichage 0 à 0 sur 0",
+            sInfoFiltered: "(filtré de _MAX_ total)",
+            sLengthMenu: "Afficher _MENU_",
+            sLoadingRecords: "Chargement...",
+            sProcessing: "Traitement...",
+            sSearch: "Rechercher :",
+            sZeroRecords: "Aucun résultat",
+            oPaginate: {
+               sFirst: "Premier",
+               sLast: "Dernier",
+               sNext: "Suivant",
+               sPrevious: "Précédent"
+            }
+         }
       });
-   </script>
-</body>
+
+      let isChanging = false;
+
+      filterCodeRep.on('change', function () {
+         if (isChanging) return;
+         isChanging = true;
+         const selected = $(this).val();
+         filterLibRep.val(depots[selected]).trigger('change');
+         dataTable.column(0).search(selected).draw();
+         isChanging = false;
+      });
+
+      filterLibRep.on('change', function () {
+         if (isChanging) return;
+         isChanging = true;
+         const selected = $(this).val();
+         for (const code in depots) {
+            if (depots[code] === selected) {
+               filterCodeRep.val(code).trigger('change');
+               break;
+            }
+         }
+         dataTable.column(1).search(selected).draw();
+         isChanging = false;
+      });
+
+      filterCodeArt.on('change', function () {
+         if (isChanging) return;
+         isChanging = true;
+         const selected = $(this).val();
+         filterDesArt.val(articles[selected]).trigger('change');
+         dataTable.column(2).search(selected).draw();
+         isChanging = false;
+      });
+
+      filterDesArt.on('change', function () {
+         if (isChanging) return;
+         isChanging = true;
+         const selected = $(this).val();
+         for (const code in articles) {
+            if (articles[code] === selected) {
+               filterCodeArt.val(code).trigger('change');
+               break;
+            }
+         }
+         dataTable.column(3).search(selected).draw();
+         isChanging = false;
+      });
+
+      resetFilters.on('click', function (e) {
+         e.preventDefault();
+         filterCodeRep.val('').trigger('change');
+         filterLibRep.val('').trigger('change');
+         filterCodeArt.val('').trigger('change');
+         filterDesArt.val('').trigger('change');
+         dataTable.search('').columns().search('').draw();
+      });
+   });
+</script>
 {% endblock %}

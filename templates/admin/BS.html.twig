@@ -1,8 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% block content %}
-<div class="midde_cont">
-   <div class="container-fluid">
+ 
       <div class="row column_title">
          <div class="col-md-12">
             <div class="page_title">
@@ -45,12 +44,20 @@
             </div>
          </div>
 
-         <div class="col-md-12 mt-4">
+         {# <div class="col-md-12 mt-4">
             <div class="card">
                <div class="card-body">
                   <div class="table-responsive">
-                     <table id="datatableBs" class="table table-striped table-bordered nowrap" style="width:100%">
-                        <thead>
+                   
+                  </div>
+               </div>
+            </div>
+         </div> #}
+  
+
+</div>
+<table id="datatableBs" class="table table-striped table-bordered nowrap" style="width:100%; display: none;">
+                    <thead>
                            <tr>
                               <th></th>
                               <th>Numéro</th>
@@ -81,20 +88,35 @@
                            {% endfor %}
                         </tbody>
                      </table>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </div>
-   </div>
-</div>
+<style>
+   @media (max-width: 768px) {
+      #datatableBs th, #datatableBs td {
+         font-size: 0.6rem;
+         padding: 0.1rem;
+      }
+   }
 
+   .dataTables_wrapper .dataTables_filter input {
+      font-size: 0.75rem;
+   }
+
+   table.dataTable {
+      width: 100% !important;
+       }
+ 
+div#datatableBs_wrapper {
+    margin-top: 50px;
+}
+   .select2-container .select2-selection--single {
+      height: 38px;
+   }
+</style>
 <script>
    function format(details) {
    let html = `
-         <table class="table table-sm table-bordered table-hover mb-0 datatablefcdetails mx-auto bg-white shadow-sm"
+             <table class="table table-sm table-bordered table-hover mb-0 datatablefcdetails mx-auto bg-white shadow-sm"
                 style="font-size: 0.85rem; width: 82%; margin-left: 5% !important;">
-            <thead style="background-color: orange; color: white;">
+            <thead class="table-light">
                <tr>
                    <th>Code Article</th>
                   <th>Désignation</th>
@@ -134,9 +156,43 @@
 
    return html;
 }
+$(document).ready(function () {
+   $('.select2').select2({ width: '100%' });
+
+   const table = $('#datatableBs').DataTable({
+      responsive: true,
+      language: {
+         url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json"
+      },
+      initComplete: function () {
+         $('#datatableBs').fadeIn(); // Affiche la table une fois qu’elle est prête
+      }
+   });
+
+   $('#datatableBs tbody').on('click', 'td.details-control', function (e) {
+      if ($(e.target).closest('button').length) return;
+
+      const tr = $(this).closest('tr');
+      const row = table.row(tr);
+      const nummvt = tr.data('nummvt');
+
+      if (row.child.isShown()) {
+         row.child.hide();
+         tr.find('i.fa-minus-circle').removeClass('fa-minus-circle text-danger').addClass('fa-plus-circle text-primary');
+      } else {
+         fetch(`/api/bs-details/${nummvt}`)
+            .then(response => response.json())
+            .then(data => {
+               row.child(format(data)).show();
+               tr.find('i.fa-plus-circle').removeClass('fa-plus-circle text-primary').addClass('fa-minus-circle text-danger');
+            })
+            .catch(() => alert("Erreur lors du chargement des détails."));
+      }
+   });
+});
 
 
-   $(document).ready(function () {
+   {# $(document).ready(function () {
       $('.select2').select2({ width: '100%' });
 
       const table = $('#datatableBs').DataTable({
@@ -166,13 +222,13 @@
                .catch(() => alert("Erreur lors du chargement des détails."));
          }
       });
-   });
+   }); #}
 
    function openFolder(numMvt) {
       fetch('/open-folder/' + numMvt)
          .then(response => {
             if (!response.ok) {
-               alert("Erreur lors de l'ouverture du dossier");
+               alert("Aucune pièce jointe ou dossier trouvé ");
             }
          });
    }

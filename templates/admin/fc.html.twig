@@ -1,9 +1,8 @@
 {% extends 'base.html.twig' %}
 
 {% block content %}
-<div class="midde_cont">
-   <div class="container-fluid">
-      <div class="row column_title">
+ 
+       <div class="row column_title">
          <div class="col-md-12">
             <div class="page_title">
                <div class="title-banner">
@@ -45,11 +44,10 @@
             </div>
          </div>
 
-         <div class="col-md-12 mt-4">
-            <div class="card">
-               <div class="card-body">
-                  <div class="table-responsive">
-                     <table id="datatableFc" class="table table-striped table-bordered nowrap" style="width:100%">
+        
+      
+</div>
+<table id="datatableFc" class="table table-striped table-bordered nowrap" style="width:100%">
                         <thead>
                            <tr>
                               <th></th>
@@ -84,14 +82,29 @@
                            {% endfor %}
                         </tbody>
                      </table>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </div>
-   </div>
-</div>
+<style>
+   @media (max-width: 768px) {
+      #datatableFc th, #datatableFc td {
+         font-size: 0.6rem;
+         padding: 0.1rem;
+      }
+   }
 
+   .dataTables_wrapper .dataTables_filter input {
+      font-size: 0.75rem;
+   }
+
+   table.dataTable {
+      width: 100% !important;
+       }
+ 
+div#datatableFc_wrapper {
+    margin-top: 50px;
+}
+   .select2-container .select2-selection--single {
+      height: 38px;
+   }
+</style>
 <script>
   function format(details) {
    let rows = '';
@@ -178,7 +191,7 @@
       fetch('/open-folder/' + numMvt)
          .then(response => {
             if (!response.ok) {
-               alert("Erreur lors de l'ouverture du dossier");
+               alert("Aucune pièce jointe ou dossier trouvé ");
             }
          });
    }

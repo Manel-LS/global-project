@@ -157,9 +157,16 @@ h1 {
     margin-bottom: 20px;
     width: 100%;
 }
-
+li.active > a.dropdown-toggle {
+    background-color: #e6e6ff;
+    color: #3333cc;
+    font-weight: bold;
+}
 .img-responsive {
     max-width: 100%;
+}
+.table-responsive {
+    padding-top: 20px;
 }
 
 h3 {
@@ -236,6 +243,13 @@ ul {
     text-align: center;
 
 }
+#datatableRg  thead th, #datatableBl thead th, #datatableFa thead th {
+    background-color: #0b51ab;
+    color: white;
+    text-align: center;
+
+}
+
 
 .title-banner {
     background-color: #c3c3ce;

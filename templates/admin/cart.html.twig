@@ -1,29 +1,7 @@
 {% extends 'base.html.twig' %}
-{% block body %}
 
-<body class="dashboard dashboard_1">
-   <div class="full_container">
-      <div class="inner_container">
-         {% include 'components/sidebar.html.twig' %}
-         <!-- right content -->
-         <div id="content">
-            {% include 'components/topbar.html.twig' %}
-            <!-- dashboard inner -->
-            <div class="midde_cont">
-               <div class="container-fluid">
-               </div>
-               <div class="col-md-12">
-                  <div class="white_shd full margin_bottom_30" style="margin-top: 15px;">
-                     <div class="full inner_elements">
-                        <div class="row">
-                           <div class="tab_style3">
-                              <div class="tabbar padding_infor_info">
-                                  
-                                 <div class="tab-content" id="v-pills-tabContent">
-                                    <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel"
-                                       aria-labelledby="v-pills-home-tab">
-                                       <div class="container-fluid">
-                                          <div class="row">
+{% block content %}
+<div class="row">
                                              <div class="col-md-12">
                                                 <div class="white_shd full margin_bottom_30" style="margin-top: 15px;">
                                                    <div class="full graph_head">
@@ -38,9 +16,12 @@
                                                       <h2>Panier</h2>
                                                       {% endif %}
                                                    </div>
-                                                   <div class="full padding_infor_info">
-                                                      <div class="table_row">
-                                                         <div class="table-responsive">
+                                                   
+                                                </div>
+                                                
+                                          </div>
+
+                                          <div class="table-container">
                                                             <table class="table table-custom">
                                                                <thead class="thead-custom">
                                                                   <tr>
@@ -124,10 +105,6 @@
 
                                                          </table>
                                                       </div>
-                                                   </div>
-                                                </div>
-                                             </div>
-                                          </div>
                                        </div>
                                        <!-- row -->
                                        {% if totalGlobal != 0 %}
@@ -198,6 +175,31 @@
          </div>
       </div>
    </div>
+   <style>
+     .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .form-control-xs {
+        height: 24px;
+        font-size: 0.8rem;
+    }
+    .btn-xs {
+        min-width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        line-height: 1;
+    }
+    @media (max-width: 575.98px) {
+        table {
+            font-size: 0.8rem;
+        }
+        th, td {
+            padding: 0.3rem;
+        }
+    }
+</style>
+
    <script>
       document.addEventListener('DOMContentLoaded', function () {
          if (window.location.hash) {
@@ -491,7 +493,7 @@
 
 
          function confirmItemDeletion(code, isGift, isExchange) {
-            const activeTab = document.querySelector('.nav-link.active').getAttribute('id');
+         /*   const activeTab = document.querySelector('.nav-link.active').getAttribute('id');*/
             var routeName = "{{ path('remove-from-cart', {'code': '__CODE__', 'isGift': '__IS_GIFT__' , 'isExchange': '__IS_EXCHANGE__' , }) }}";
 
 
@@ -506,14 +508,14 @@
                      .replace('__CODE__', encodeURIComponent(code))
                      .replace('__IS_GIFT__', isGift ? '1' : '0')
                      .replace('__IS_EXCHANGE__', isExchange ? '1' : '0')
-                     + '#' + activeTab;
+                     ;
                }, 300);
             } else {
                window.location.href = routeName
                   .replace('__CODE__', encodeURIComponent(code))
                   .replace('__IS_GIFT__', isGift ? '1' : '0')
                   .replace('__IS_EXCHANGE__', isExchange ? '1' : '0')
-                  + '#' + activeTab;
+                  ;
             }
          }
 
