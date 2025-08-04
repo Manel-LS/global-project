@@ -115,12 +115,18 @@
 
 <!-- STYLES -->
 <style>
+div#tableClients_wrapper {
+    padding-top: 50px;
+}
    @media (max-width: 768px) {
       #tableClients th, #tableClients td {
          font-size: 0.6rem;
          padding: 0.1rem;
       }
-   }
+input.quantity-input.custom-quantity-input {
+    width: 35px !important;
+}
+      
 
    .dataTables_wrapper .dataTables_filter input {
       font-size: 0.75rem;
@@ -136,6 +142,22 @@ div#tableClients_wrapper {
    .select2-container .select2-selection--single {
       height: 38px;
    }
+ input.quantity-input.custom-quantity-input {
+    width: 33px !important;
+    height: 27px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 12px;
+   }
+   button.btn.btn-danger.minus-btn.custom-minus-btn.d-flex.align-items-center.justify-content-center {
+    font-size: 10px;
+    width: 24px;
+}
+button.btn.cur-p.btn-warning.plus-btn.custom-plus-btn.d-flex.align-items-center.justify-content-center {
+    font-size: 10px;
+    width: 24px;
+} }
+
 </style>
 
 <!-- SCRIPTS -->

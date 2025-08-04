@@ -4,6 +4,7 @@ namespace App\Service;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -20,37 +21,40 @@ class FicheClientService
 
     public function ficheClient($codetrs, $startDate, $endDate, $requete, $baseF, $chkdebour, $societe, $typeFiche, Connection $connection, $PARAM, $codeUser): JsonResponse
     {
+        // Validation des paramètres
+        if (!in_array($baseF, ['F', 'E', 'G', 'S', 'C'])) {
+            throw new InvalidArgumentException("Valeur invalide pour baseF : $baseF");
+        }
+        if (!in_array($typeFiche, ['Date', 'Ech', 'Enc'])) {
+            throw new InvalidArgumentException("Valeur invalide pour typeFiche : $typeFiche");
+        }
 
-        $reqRegl = "";
-        $champVentReg = "";
+        // Récupération de la session et du code société
         $session = $this->requestStack->getSession();
         $codeSoc = $session->get('database_choice');
 
-        if ($baseF === "E" || $baseF === "C") {
-            $reqRegl = " AND baseregl = 'B' AND garantie='0' ";
-        } elseif ($baseF === "F") {
-            $reqRegl = " AND (baseregl = 'B' OR baseregl='F') AND garantie='0' ";
-        } elseif ($baseF === "S") {
-            $reqRegl = " AND baseregl = 'S' AND garantie='0' ";
-        } elseif ($baseF === "G") {
-            $reqRegl = " AND (baseregl = 'B' OR baseregl='S') AND garantie='0' ";
-        }
+        // Définition de la condition $reqRegl selon $baseF
+        $reqRegl = match ($baseF) {
+            'E', 'C' => " AND baseregl = 'B' AND garantie='0' ",
+            'F' => " AND (baseregl = 'B' OR baseregl='F') AND garantie='0' ",
+            'S' => " AND baseregl = 'S' AND garantie='0' ",
+            'G' => " AND (baseregl = 'B' OR baseregl='S') AND garantie='0' ",
+            default => "",
+        };
 
-        if ($PARAM->getTypeRapp() === "BL") {
-            $champVentReg = "restevbl";
-        } else {
-            $champVentReg = "resteventiler";
-        }
+        // Définition de $champVentReg selon le type de rapport
+        $champVentReg = $PARAM->getTypeRapp() === "BL" ? "restevbl" : "resteventiler";
 
+        // Champs communs pour les insertions
         $ses = "nommvt, num, datemvt, libelle, echeance, montant1, temps, codetrs, libtrs, ncompte, solde1, libcaisse, usera";
 
+        // Insertion des règlements selon $typeFiche
         if ($typeFiche === "Date") {
             $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'RG', nummvt, datemvt, CONCAT('RG N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque, ' / ', libcaisse), 
-                   echeance, montant, temps, codetrs, libtrs, rapprocher, ROUND($champVentReg, 3), banquecli, :codeUser 
-            FROM $codeSoc.reglement 
-            WHERE fichecli='1' AND $requete $reqRegl AND datemvt BETWEEN :startDate AND :endDate";
-
+                    SELECT 'RG', nummvt, datemvt, CONCAT('RG N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque, ' / ', libcaisse), 
+                           echeance, montant, temps, codetrs, libtrs, rapprocher, ROUND($champVentReg, 3), banquecli, :codeUser 
+                    FROM $codeSoc.reglement 
+                    WHERE fichecli='1' AND $requete $reqRegl AND datemvt BETWEEN :startDate AND :endDate";
             $connection->executeStatement($sql, [
                 'codeUser' => $codeUser,
                 'codetrs'  => $codetrs,
@@ -109,96 +113,58 @@ class FicheClientService
             ]);
         }
 
-        // Insertion des débours clients
-        // if ($debours === "1") {
-        //     $ses = "nommvt, num, datemvt, libelle, echeance, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
-        //     $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-        //             SELECT 'DE', nummvt, datemvt, CONCAT('DE N° : ', nummvt, ' / Debours / MT : ', montant), 
-        //                    :dateZero, (resteventiler) AS mtdeb, temps, codetrs, libtrs, rapprocher, ROUND(resteventiler, 3), :codeUser 
-        //             FROM $codeSoc.regldeb 
-        //             WHERE ROUND(resteventiler, 3) > 0 AND $requete";
-        //     $connection->executeStatement($sql, ['dateZero' => '0000-00-00', 'codeUser' => $codeUser]);
-        // }
+        // Fonction pour exécuter les insertions communes (IM, IC, MR)
+        $executeCommonInserts = function ($basereglCondition) use ($codeSoc, $codeUser, $codetrs, $startDate, $endDate, $requete, $connection) {
+            $ses = "nommvt, num, datemvt, libelle, echeance, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
 
-        // Insertion des impayés et autres mouvements
+            // Insertion pour impclient (IM)
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'IM', nummvt, datemvt, CONCAT('IM N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
+                           echeance, ROUND(montant + fraisimp, 3), temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.impclient 
+                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl $basereglCondition) AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            // Insertion pour impcaisse (IC)
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'IC', nummvt, datemvt, CONCAT('IC N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
+                           echeance, montant, temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.impcaisse 
+                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl $basereglCondition) AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            // Insertion pour modifregl (MR)
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'MR', nummvt, datemvt, CONCAT('MR N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
+                           echeance, montant, temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.modifregl 
+                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl $basereglCondition) AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+        };
+
+        // Exécuter les insertions communes selon $baseF
         if ($baseF !== "S") {
-            // Insertion des impayés banque
-            $ses = "nommvt, num, datemvt, libelle, echeance, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                    SELECT 'IM', nummvt, datemvt, CONCAT('IM N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
-                           echeance, ROUND(montant + fraisimp, 3), temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
-                    FROM $codeSoc.impclient 
-                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl <> 'S') AND $requete";
-            $connection->executeStatement($sql, [
-                'codeUser' => $codeUser,
-                'codetrs'  => $codetrs,
-                'startDate' => $startDate,
-                'endDate'   => $endDate
-            ]);
-
-            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                    SELECT 'IC', nummvt, datemvt, CONCAT('IC N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
-                           echeance, montant, temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
-                    FROM $codeSoc.impcaisse 
-                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl <> 'S') AND $requete";
-            $connection->executeStatement($sql, [
-                'codeUser' => $codeUser,
-                'codetrs'  => $codetrs,
-                'startDate' => $startDate,
-                'endDate'   => $endDate
-            ]);
-            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                    SELECT 'MR', nummvt, datemvt, CONCAT('MR N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
-                           echeance, montant, temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
-                    FROM $codeSoc.modifregl 
-                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl <> 'S') AND $requete";
-            $connection->executeStatement($sql, [
-                'codeUser' => $codeUser,
-                'codetrs'  => $codetrs,
-                'startDate' => $startDate,
-                'endDate'   => $endDate
-            ]);
-            if ($baseF === "G") {
-                goto AvecBaseG;
-            }
+            $executeCommonInserts("<> 'S'");
         } else {
-            AvecBaseG:
-            $ses = "nommvt, num, datemvt, libelle, echeance, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                    SELECT 'IM', nummvt, datemvt, CONCAT('IM N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
-                           echeance, ROUND(montant + fraisimp, 3), temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
-                    FROM $codeSoc.impclient 
-                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl = 'S') AND $requete";
-            $connection->executeStatement($sql, [
-                'codeUser' => $codeUser,
-                'codetrs'  => $codetrs,
-                'startDate' => $startDate,
-                'endDate'   => $endDate
-            ]);
-            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                    SELECT 'IC', nummvt, datemvt, CONCAT('IC N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
-                           echeance, montant, temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
-                    FROM $codeSoc.impcaisse 
-                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl = 'S') AND $requete";
-            $connection->executeStatement($sql, [
-                'codeUser' => $codeUser,
-                'codetrs'  => $codetrs,
-                'startDate' => $startDate,  // Bind startDate
-                'endDate'   => $endDate     // Bind endDate
-            ]);
-            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                    SELECT 'MR', nummvt, datemvt, CONCAT('MR N° : ', nummvt, ' / ', LEFT(typeregl, 2), ' / ', numcheque), 
-                           echeance, montant, temps, codetrs, libtrs, '', ROUND(montant + fraisimp - mtrapp, 3), :codeUser 
-                    FROM $codeSoc.modifregl 
-                    WHERE pieceliee IN (SELECT nummvt FROM reglement WHERE baseregl = 'S') AND $requete";
-            $connection->executeStatement($sql, [
-                'codeUser' => $codeUser,
-                'codetrs'  => $codetrs,
-                'startDate' => $startDate,  // Bind startDate
-                'endDate'   => $endDate     // Bind endDate
-            ]);
+            $executeCommonInserts("= 'S'");
         }
 
+        // Insertion pour efc (FC)
         $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
         $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
                 SELECT 'FC', nummvt, datemvt, CONCAT('FC N° : ', nummvt), (mttc + timbref) AS soldef, temps, codetrs, libtrs, '', ROUND(mttc + timbref - mtrapp, 3), :codeUser 
@@ -207,9 +173,11 @@ class FicheClientService
         $connection->executeStatement($sql, [
             'codeUser' => $codeUser,
             'codetrs'  => $codetrs,
-            'startDate' => $startDate,  // Bind startDate
-            'endDate'   => $endDate     // Bind endDate
+            'startDate' => $startDate,
+            'endDate'   => $endDate
         ]);
+
+        // Logique spécifique pour chaque $baseF
         if ($baseF === "F") {
             $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
             $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
@@ -219,9 +187,10 @@ class FicheClientService
             $connection->executeStatement($sql, [
                 'codeUser' => $codeUser,
                 'codetrs'  => $codetrs,
-                'startDate' => $startDate,  // Bind startDate
-                'endDate'   => $endDate     // Bind endDate
+                'startDate' => $startDate,
+                'endDate'   => $endDate
             ]);
+
             $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
             $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
                     SELECT 'AV', nummvt, datemvt, CONCAT('AV N° : ', nummvt), (mttc + timbref) AS soldef, temps, codetrs, libtrs, '', ROUND(mttc + timbref - mtrapp, 3), :codeUser 
@@ -230,9 +199,10 @@ class FicheClientService
             $connection->executeStatement($sql, [
                 'codeUser' => $codeUser,
                 'codetrs'  => $codetrs,
-                'startDate' => $startDate,  // Bind startDate
-                'endDate'   => $endDate     // Bind endDate
+                'startDate' => $startDate,
+                'endDate'   => $endDate
             ]);
+
             if ($PARAM->getCalcLivCour() == "0") {
                 $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
                 $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
@@ -242,9 +212,10 @@ class FicheClientService
                 $connection->executeStatement($sql, [
                     'codeUser' => $codeUser,
                     'codetrs'  => $codetrs,
-                    'startDate' => $startDate,  // Bind startDate
-                    'endDate'   => $endDate     // Bind endDate
+                    'startDate' => $startDate,
+                    'endDate'   => $endDate
                 ]);
+
                 $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
                 $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
                         SELECT 'BR', nummvt, datemvt, CONCAT('BR N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
@@ -253,165 +224,19 @@ class FicheClientService
                 $connection->executeStatement($sql, [
                     'codeUser' => $codeUser,
                     'codetrs'  => $codetrs,
-                    'startDate' => $startDate,  // Bind startDate
-                    'endDate'   => $endDate     // Bind endDate
-                ]);
-            } elseif ($baseF === "E") {
-                // Logique spécifique pour la base E
-                if ($PARAM->getGestionBS() === "0") {
-                    $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                    $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                SELECT 'BS', nummvt, datemvt, CONCAT('BS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
-                FROM $codeSoc.ebs 
-                WHERE codefact <> 'A' AND $requete";
-                    $connection->executeStatement($sql, [
-                        'codeUser' => $codeUser,
-                        'codetrs'  => $codetrs,
-                        'startDate' => $startDate,
-                        'endDate'   => $endDate
-                    ]);
-
-                    $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
-                    $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                SELECT 'RS', nummvt, datemvt, CONCAT('RS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
-                FROM $codeSoc.ebrs 
-                WHERE codefact <> 'A' AND $requete";
-                    $connection->executeStatement($sql, [
-                        'codeUser' => $codeUser,
-                        'codetrs'  => $codetrs,
-                        'startDate' => $startDate,
-                        'endDate'   => $endDate
-                    ]);
-                }
-
-                if ($PARAM->getTypeRapp() === "BL") {
-                    $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                    $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                SELECT 'TI', nummvt, datemvt, CONCAT('FA N° : ', nummvt), timbref, temps, codetrs, libtrs, '', ROUND(timbref - mtrapp, 3), :codeUser 
-                FROM $codeSoc.efactv 
-                WHERE codefact <> 'A' AND typefact='FA' AND $requete";
-                    $connection->executeStatement($sql, [
-                        'codeUser' => $codeUser,
-                        'codetrs'  => $codetrs,
-                        'startDate' => $startDate,
-                        'endDate'   => $endDate
-                    ]);
-                }
-
-                $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'AV', nummvt, datemvt, CONCAT('AV N° : ', nummvt), (mttc + timbref) AS soldef, temps, codetrs, libtrs, '', ROUND(mttc + timbref - mtrapp, 3), :codeUser 
-            FROM $codeSoc.efactv 
-            WHERE typefact = 'AV' AND codefact <> 'A' AND numbc='AV_FIN' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
                     'startDate' => $startDate,
                     'endDate'   => $endDate
                 ]);
+            }
+        }
 
+        if ($baseF === "E") {
+            if ($PARAM->getGestionBS() === "0") {
                 $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
                 $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'BL', nummvt, datemvt, CONCAT('BL N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
-            FROM $codeSoc.ebl 
-            WHERE codefact <> 'A' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-
-                $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'TC', nummvt, datemvt, CONCAT('TC N° : ', nummvt, ' / Fact : ', numfact), mttcnet, temps, codetrs, libtrs, '', 0, :codeUser 
-            FROM $codeSoc.etick 
-            WHERE (codefact = 'N' OR codefact = 'O' OR codefact IS NULL) AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-
-                // Gestion des caisses CV
-                $caisses = $connection->fetchAllAssociative("SELECT * FROM $codeSoc.caisse WHERE typecaisse = 'CV' ORDER BY code");
-                foreach ($caisses as $caisse) {
-                    $codeCaisse = $caisse['code'];
-                    $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                SELECT 'TC', nummvt, datemvt, CONCAT('TC N° : ', nummvt, ' / Fact : ', numfact), mttcnet, temps, codetrs, libtrs, '', 0, :codeUser 
-                FROM $codeSoc.etick$codeCaisse 
-                WHERE (codefact = 'N' OR codefact = 'O' OR codefact IS NULL) AND $requete";
-                    $connection->executeStatement($sql, [
-                        'codeUser' => $codeUser,
-                        'codetrs'  => $codetrs,
-                        'startDate' => $startDate,
-                        'endDate'   => $endDate
-                    ]);
-                }
-
-                $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'BR', nummvt, datemvt, CONCAT('BR N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
-            FROM $codeSoc.ebrc 
-            WHERE codefact <> 'A' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-            } elseif ($baseF === "G") {
-                // Logique spécifique pour la base G
-                if ($PARAM->getGestionProjet() === "1") {
-                    $listemvts = $connection->fetchAllAssociative("SELECT * FROM $codeSoc.listemvt WHERE chantier = '1' AND fichecli='1' ORDER BY code");
-                    foreach ($listemvts as $listemvt) {
-                        $codeMvt = $listemvt['code'];
-                        if ($listemvt['stock'] === "S") {
-                            $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                        SELECT 'BS', nummvt, datemvt, CONCAT('BS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
-                        FROM $codeSoc.emvt 
-                        WHERE codefact <> 'A' AND LEFT(nummvt, 2) = :codeMvt AND $requete";
-                            $connection->executeStatement($sql, [
-                                'codeUser' => $codeUser,
-                                'codeMvt'  => $codeMvt,
-                                'startDate' => $startDate,
-                                'endDate'   => $endDate
-                            ]);
-                        } elseif ($listemvt['stock'] === "E") {
-                            $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
-                            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                        SELECT 'BR', nummvt, datemvt, CONCAT('BR N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
-                        FROM $codeSoc.emvt 
-                        WHERE codefact <> 'A' AND LEFT(nummvt, 2) = :codeMvt AND $requete";
-                            $connection->executeStatement($sql, [
-                                'codeUser' => $codeUser,
-                                'codeMvt'  => $codeMvt,
-                                'startDate' => $startDate,
-                                'endDate'   => $endDate
-                            ]);
-                        }
-                    }
-                }
-
-                $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'AV', nummvt, datemvt, CONCAT('AV N° : ', nummvt), (mttc + timbref) AS soldef, temps, codetrs, libtrs, '', ROUND(mttc + timbref - mtrapp, 3), :codeUser 
-            FROM $codeSoc.efactv 
-            WHERE typefact = 'AV' AND codefact <> 'A' AND numbc='AV_FIN' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-
-                $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'BS', nummvt, datemvt, CONCAT('BS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
-            FROM $codeSoc.ebs 
-            WHERE codefact <> 'A' AND $requete";
+                        SELECT 'BS', nummvt, datemvt, CONCAT('BS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
+                        FROM $codeSoc.ebs 
+                        WHERE codefact <> 'A' AND $requete";
                 $connection->executeStatement($sql, [
                     'codeUser' => $codeUser,
                     'codetrs'  => $codetrs,
@@ -421,99 +246,9 @@ class FicheClientService
 
                 $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
                 $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'RS', nummvt, datemvt, CONCAT('RS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
-            FROM $codeSoc.ebrs 
-            WHERE codefact <> 'A' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-
-                $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'BL', nummvt, datemvt, CONCAT('BL N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
-            FROM $codeSoc.ebl 
-            WHERE codefact <> 'A' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-
-                $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'TC', nummvt, datemvt, CONCAT('TC N° : ', nummvt, ' / Fact : ', numfact), mttcnet, temps, codetrs, libtrs, '', 0, :codeUser 
-            FROM $codeSoc.etick 
-            WHERE (codefact = 'N' OR codefact = 'O' OR codefact IS NULL) AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-
-                // Gestion des caisses CV
-                $caisses = $connection->fetchAllAssociative("SELECT * FROM $codeSoc.caisse WHERE typecaisse = 'CV' ORDER BY code");
-                foreach ($caisses as $caisse) {
-                    $codeCaisse = $caisse['code'];
-                    $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-                SELECT 'TC', nummvt, datemvt, CONCAT('TC N° : ', nummvt, ' / Fact : ', numfact), mttcnet, temps, codetrs, libtrs, '', 0, :codeUser 
-                FROM $codeSoc.etick$codeCaisse 
-                WHERE (codefact = 'N' OR codefact = 'O' OR codefact IS NULL) AND $requete";
-                    $connection->executeStatement($sql, [
-                        'codeUser' => $codeUser,
-                        'codetrs'  => $codetrs,
-                        'startDate' => $startDate,
-                        'endDate'   => $endDate
-                    ]);
-                }
-
-                $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'BR', nummvt, datemvt, CONCAT('BR N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
-            FROM $codeSoc.ebrc 
-            WHERE codefact <> 'A' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-            } elseif ($baseF === "S") {
-                // Logique spécifique pour la base S
-                $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'BS', nummvt, datemvt, CONCAT('BS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
-            FROM $codeSoc.ebs 
-            WHERE codefact <> 'A' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-
-                $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'RS', nummvt, datemvt, CONCAT('RS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
-            FROM $codeSoc.ebrs 
-            WHERE codefact <> 'A' AND $requete";
-                $connection->executeStatement($sql, [
-                    'codeUser' => $codeUser,
-                    'codetrs'  => $codetrs,
-                    'startDate' => $startDate,
-                    'endDate'   => $endDate
-                ]);
-            } elseif ($baseF === "C") {
-                // Logique spécifique pour la base C
-                $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
-                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
-            SELECT 'BC', nummvt, datemvt, CONCAT('BC N° : ', nummvt), mttc, temps, codetrs, libtrs, '', ROUND(mttc, 3), :codeUser 
-            FROM $codeSoc.ebcc 
-            WHERE codefact <> 'A' AND $requete";
+                        SELECT 'RS', nummvt, datemvt, CONCAT('RS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
+                        FROM $codeSoc.ebrs 
+                        WHERE codefact <> 'A' AND $requete";
                 $connection->executeStatement($sql, [
                     'codeUser' => $codeUser,
                     'codetrs'  => $codetrs,
@@ -521,10 +256,247 @@ class FicheClientService
                     'endDate'   => $endDate
                 ]);
             }
+
+            if ($PARAM->getTypeRapp() === "BL") {
+                $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
+                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                        SELECT 'TI', nummvt, datemvt, CONCAT('FA N° : ', nummvt), timbref, temps, codetrs, libtrs, '', ROUND(timbref - mtrapp, 3), :codeUser 
+                        FROM $codeSoc.efactv 
+                        WHERE codefact <> 'A' AND typefact='FA' AND $requete";
+                $connection->executeStatement($sql, [
+                    'codeUser' => $codeUser,
+                    'codetrs'  => $codetrs,
+                    'startDate' => $startDate,
+                    'endDate'   => $endDate
+                ]);
+            }
+
+            $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'AV', nummvt, datemvt, CONCAT('AV N° : ', nummvt), (mttc + timbref) AS soldef, temps, codetrs, libtrs, '', ROUND(mttc + timbref - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.efactv 
+                    WHERE typefact = 'AV' AND codefact <> 'A' AND numbc='AV_FIN' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'BL', nummvt, datemvt, CONCAT('BL N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.ebl 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'TC', nummvt, datemvt, CONCAT('TC N° : ', nummvt, ' / Fact : ', numfact), mttcnet, temps, codetrs, libtrs, '', 0, :codeUser 
+                    FROM $codeSoc.etick 
+                    WHERE (codefact = 'N' OR codefact = 'O' OR codefact IS NULL) AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $caisses = $connection->fetchAllAssociative("SELECT * FROM $codeSoc.caisse WHERE typecaisse = 'CV' ORDER BY code");
+            foreach ($caisses as $caisse) {
+                $codeCaisse = $caisse['code'];
+                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                        SELECT 'TC', nummvt, datemvt, CONCAT('TC N° : ', nummvt, ' / Fact : ', numfact), mttcnet, temps, codetrs, libtrs, '', 0, :codeUser 
+                        FROM $codeSoc.etick$codeCaisse 
+                        WHERE (codefact = 'N' OR codefact = 'O' OR codefact IS NULL) AND $requete";
+                $connection->executeStatement($sql, [
+                    'codeUser' => $codeUser,
+                    'codetrs'  => $codetrs,
+                    'startDate' => $startDate,
+                    'endDate'   => $endDate
+                ]);
+            }
+
+            $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'BR', nummvt, datemvt, CONCAT('BR N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
+                    FROM $codeSoc.ebrc 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
         }
+
+        if ($baseF === "G") {
+            if ($PARAM->getGestionProjet() === "1") {
+                $listemvts = $connection->fetchAllAssociative("SELECT * FROM $codeSoc.listemvt WHERE chantier = '1' AND fichecli='1' ORDER BY code");
+                foreach ($listemvts as $listemvt) {
+                    $codeMvt = $listemvt['code'];
+                    if ($listemvt['stock'] === "S") {
+                        $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
+                        $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                                SELECT 'BS', nummvt, datemvt, CONCAT('BS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
+                                FROM $codeSoc.emvt 
+                                WHERE codefact <> 'A' AND LEFT(nummvt, 2) = :codeMvt AND $requete";
+                        $connection->executeStatement($sql, [
+                            'codeUser' => $codeUser,
+                            'codeMvt'  => $codeMvt,
+                            'startDate' => $startDate,
+                            'endDate'   => $endDate
+                        ]);
+                    } elseif ($listemvt['stock'] === "E") {
+                        $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
+                        $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                                SELECT 'BR', nummvt, datemvt, CONCAT('BR N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
+                                FROM $codeSoc.emvt 
+                                WHERE codefact <> 'A' AND LEFT(nummvt, 2) = :codeMvt AND $requete";
+                        $connection->executeStatement($sql, [
+                            'codeUser' => $codeUser,
+                            'codeMvt'  => $codeMvt,
+                            'startDate' => $startDate,
+                            'endDate'   => $endDate
+                        ]);
+                    }
+                }
+            }
+
+            $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'AV', nummvt, datemvt, CONCAT('AV N° : ', nummvt), (mttc + timbref) AS soldef, temps, codetrs, libtrs, '', ROUND(mttc + timbref - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.efactv 
+                    WHERE typefact = 'AV' AND codefact <> 'A' AND numbc='AV_FIN' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'BS', nummvt, datemvt, CONCAT('BS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.ebs 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'RS', nummvt, datemvt, CONCAT('RS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
+                    FROM $codeSoc.ebrs 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'BL', nummvt, datemvt, CONCAT('BL N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.ebl 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'TC', nummvt, datemvt, CONCAT('TC N° : ', nummvt, ' / Fact : ', numfact), mttcnet, temps, codetrs, libtrs, '', 0, :codeUser 
+                    FROM $codeSoc.etick 
+                    WHERE (codefact = 'N' OR codefact = 'O' OR codefact IS NULL) AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $caisses = $connection->fetchAllAssociative("SELECT * FROM $codeSoc.caisse WHERE typecaisse = 'CV' ORDER BY code");
+            foreach ($caisses as $caisse) {
+                $codeCaisse = $caisse['code'];
+                $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                        SELECT 'TC', nummvt, datemvt, CONCAT('TC N° : ', nummvt, ' / Fact : ', numfact), mttcnet, temps, codetrs, libtrs, '', 0, :codeUser 
+                        FROM $codeSoc.etick$codeCaisse 
+                        WHERE (codefact = 'N' OR codefact = 'O' OR codefact IS NULL) AND $requete";
+                $connection->executeStatement($sql, [
+                    'codeUser' => $codeUser,
+                    'codetrs'  => $codetrs,
+                    'startDate' => $startDate,
+                    'endDate'   => $endDate
+                ]);
+            }
+
+            $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'BR', nummvt, datemvt, CONCAT('BR N° : ', nummvt, ' / Fact : ', numfact), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
+                    FROM $codeSoc.ebrc 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+        }
+
+        if ($baseF === "S") {
+ 
+            $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'BS', nummvt, datemvt, CONCAT('BS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', ROUND(mttc - mtrapp, 3), :codeUser 
+                    FROM $codeSoc.ebs 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+
+            $ses = "nommvt, num, datemvt, libelle, montant1, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'RS', nummvt, datemvt, CONCAT('RS N° : ', nummvt), mttc, temps, codetrs, libtrs, '', 0, :codeUser 
+                    FROM $codeSoc.ebrs 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+        }
+
+        if ($baseF === "C") {
+            $ses = "nommvt, num, datemvt, libelle, montant, temps, codetrs, libtrs, ncompte, solde1, usera";
+            $sql = "INSERT INTO baseimpr.tmpmvtcaisse ($ses) 
+                    SELECT 'BC', nummvt, datemvt, CONCAT('BC N° : ', nummvt), mttc, temps, codetrs, libtrs, '', ROUND(mttc, 3), :codeUser 
+                    FROM $codeSoc.ebcc 
+                    WHERE codefact <> 'A' AND $requete";
+            $connection->executeStatement($sql, [
+                'codeUser' => $codeUser,
+                'codetrs'  => $codetrs,
+                'startDate' => $startDate,
+                'endDate'   => $endDate
+            ]);
+        }
+
         return new JsonResponse(['status' => 'success', 'message' => 'Fiche client générée avec succès.']);
     }
-
 
 
     public function ficheClientDet($codetrs, $startDate, $endDate, $requete, $baseF, $debours, $societe, $typeFiche, $connection, $codeUser, $PARAM): JsonResponse

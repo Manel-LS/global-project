@@ -28,7 +28,7 @@ security:
 
     access_control:
 
-        - { path: ^/login, roles: PUBLIC_ACCESS }  # Autoriser l'accès à la page de login
-        - { path: ^/admin, roles: ROLE_ADMIN }  # Zone admin protégée
-        - { path: ^/profile, roles: ROLE_USER }  # Zone utilisateur protégée
-        - { path: ^/, roles: PUBLIC_ACCESS }  # Autoriser l'accès public à la homepage
+        - { path: ^/login, roles: PUBLIC_ACCESS }   
+        - { path: ^/admin, roles: ROLE_ADMIN }   
+        - { path: ^/profile, roles: ROLE_USER }  
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY } 

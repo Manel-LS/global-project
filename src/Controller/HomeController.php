@@ -41,4 +41,14 @@ class HomeController extends AbstractController
         }
         return $this->render('admin/dashboard.html.twig');
     }
+
+    public function someAction(Request $request)
+{
+    $databaseChoice = $request->getSession()->get('database_choice');
+
+    return $this->render('components/sidebar.html.twig', [
+        'databaseChoice' => $databaseChoice
+    ]);
+}
+
 }

@@ -6,16 +6,18 @@
       <div class="icon_setting"></div>
       <div class="user_profle_side">
         <div class="user_img">
-          <img class="img-responsive" src="https://ui-avatars.com/api/?name={{ app.user ? app.user.libelle : 'Guest' }}" alt="Avatar">
-        </div>
-        <div class="user_info">
-          {% if app.user %}
-            <h6>{{ app.user.libelle }}</h6>
-          {% else %}
-            <p>Aucun utilisateur connecté</p>
-          {% endif %}
-          <p><span class="online_animation"></span> Online</p>
-        </div>
+          {# <img class="img-responsive" src="https://ui-avatars.com/api/?name={{ app.user ? app.user.libelle : 'Guest' }}" alt="Avatar"> #}
+                  <img class="img-responsive" src="https://ui-avatars.com/api/?name=BD" alt="Avatar">
+</div>
+        {% if databaseName('database_choice') != 'AGR' %}
+    <div class="user_info">
+        <h6>Base sélectionnée : </h6>
+        <h2>
+            <p><span class="online_animation"></span> {{ databaseName('database_choice') ?: 'Aucune' }}</p>
+        </h2>
+    </div>
+{% endif %}
+
       </div>
     </div>
   </div>
@@ -116,7 +118,7 @@
 }
 
  #sidebar ul ul li.active > a {
-  background-color: #96d5b7 !important;
+  background-color:   #6c6c7f !important ;
   color: #fff !important;
   font-weight: bold;
  }

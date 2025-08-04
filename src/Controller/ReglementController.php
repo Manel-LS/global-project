@@ -106,6 +106,8 @@ class ReglementController extends AbstractController
          $parametres = $this->getParametres();
         $PARAM = $parametres[0];
 
+       // dd($BASE1);
+
          $this->ficheClientService->ficheClient($codetrs, $startDate, $endDate, $requete, $BASE1, $chkdebour, $CodeSoc, $typeFiche, $connection, $PARAM, $codeUser);
         if ($detailMouvement == "1") {
             $this->ficheClientService->ficheClientDet($codetrs, $startDate, $endDate, $reqMvt, $BASE1, $chkdebour, $CodeSoc, $typeFiche, $connection, $codeUser, $PARAM);
@@ -236,8 +238,8 @@ class ReglementController extends AbstractController
             $livEncours = 0.000;
         }
 
+        //  $mtTotalRisque = $solde + $livEncours + $mtencour + $mtechu;
          $mtTotalRisque = $solde + $livEncours + $mtencour + $mtechu;
-
         return new JsonResponse([
             'selectionData' => $selectionData,
             'baseData' => $baseData, 

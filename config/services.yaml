@@ -3,6 +3,11 @@
 parameters:
     upload_directory: '%kernel.project_dir%/public/uploads'
 services:
+    App\Twig\SessionExtension:
+        arguments:
+            $session: '@session' # 🔧 Injection manuelle
+        tags:
+            - { name: 'twig.extension' }
     App\Service\DynamicEntityManagerService:
         arguments:
             $requestStack: '@request_stack'

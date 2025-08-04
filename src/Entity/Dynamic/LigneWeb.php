@@ -34,8 +34,8 @@ class LigneWeb
     #[ORM\Column(type: 'float', length: 255)]
     private ?float $qteart = null;
 
-    #[ORM\Column(type: 'float', length: 255)]
-    private ?float $qtepromo = null;
+    // #[ORM\Column(type: 'float', length: 255)]
+    // private ?float $qtepromo = null;
 
     #[ORM\Column(type: 'float', length: 255)]
     private ?float $qtegratuit = null;
@@ -235,17 +235,17 @@ class LigneWeb
         return $this;
     }
 
-    public function getQtepromo()
-    {
-        return $this->qtepromo;
-    }
+    // public function getQtepromo()
+    // {
+    //     return $this->qtepromo;
+    // }
 
-    public function setQtepromo($qtepromo)
-    {
-        $this->qtepromo = $qtepromo;
+    // public function setQtepromo($qtepromo)
+    // {
+    //     $this->qtepromo = $qtepromo;
 
-        return $this;
-    }
+    //     return $this;
+    // }
  
     public function getQtegratuit()
     {

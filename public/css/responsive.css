@@ -131,7 +131,7 @@
         padding: 0;
     }
 }
-
+ 
 @media (min-width: 768px) and (max-width: 991px) {
     body {
         overflow-x: hidden;
@@ -184,6 +184,12 @@
         width: 100%;
         padding: 0 20px;
     }
+    input.quantity-input.custom-quantity-input {
+        width: 35px !important;
+           }
+           table.dataTable thead>tr>th.sorting{
+            padding-right: 2px;
+           }
 }
 @media (max-width: 768px) {
     #sidebar {

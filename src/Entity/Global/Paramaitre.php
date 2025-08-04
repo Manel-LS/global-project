@@ -41,6 +41,10 @@ class Paramaitre
     #[ORM\Column(type: 'string', length: 255)]
     private ?string $gestionbs = null;
     
+     #[ORM\Column(type: 'string', length: 255)]
+    private ?string $GestionProjet = null;
+    
+    
 
 
     /**
@@ -143,6 +147,8 @@ class Paramaitre
         return $this;
     }
 
+
+    
     /**
      * Get the value of ExerciceCom
      */ 
@@ -239,6 +245,26 @@ class Paramaitre
     public function setGestionbs($gestionbs)
     {
         $this->gestionbs = $gestionbs;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of GestionProjet
+     */ 
+    public function getGestionProjet()
+    {
+        return $this->GestionProjet;
+    }
+
+    /**
+     * Set the value of GestionProjet
+     *
+     * @return  self
+     */ 
+    public function setGestionProjet($GestionProjet)
+    {
+        $this->GestionProjet = $GestionProjet;
 
         return $this;
     }

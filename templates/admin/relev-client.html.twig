@@ -533,7 +533,8 @@ $(document).ready(function() {
         $('#mtEncours').text(formatOrHide(response.mtencour));
         $('#mtEchu').text(formatOrHide(response.mtechu));
         $('#soldeImpayer').text(formatOrHide(response.mtsoldeImpayer));
-        $('#mtTotalRisque').text(formatOrHide(response.mtTotalRisque));
+/*        $('#mtTotalRisque').text(formatOrHide(response.mtTotalRisque));*/
+        $('#mtTotalRisque').text(formatOrHide(soldeActuel + (response.livraisonEncours || 0) + (response.mtencour) + (response.mtechu) ));
     }
 
     function initDataTable() {

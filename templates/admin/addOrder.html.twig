@@ -81,10 +81,10 @@
 									<div
 										class="card-header text-white text-center d-flex justify-content-between align-items-center">
 										<h5 class="mb-0">Liste des Catégories</h5>
-
+{# 
 										<button class="btn btn-sm btn-light" id="toggle-category">
 											<i class="fas fa-chevron-left"></i>
-										</button>
+										</button> #}
 									</div>
 									<div class="card-body">
 										<ul class="list-group" id="category-list"
@@ -108,18 +108,13 @@
 										<h5>Ajouter la commande</h5>
 									</div>
 									<div class="card-body">
-										<div class="tab-content mt-3">
-											<div class="tab-pane fade active show" id="tab-order" role="tabpanel">
-												<div class="col">
-													<div class="card" id="table-card">
-														<div class="card-body">
 															<div class="table-responsive">
 																<table id="tableOrder" style="width:100%">
 																	<thead>
 																		<tr>
 																			<th class="text-left">Libellé</th>
-																			<th class="text-center">Qte disponible
-																			</th>
+																			{# <th class="text-center">Qte disponible
+																			</th> #}
 																			<th class="text-center">Qte</th>
 																			{# <th class="text-center">Qte promotion #}
 																			</th>
@@ -133,11 +128,17 @@
 																</table>
 															</div>
 														</div>
+									{# <div class="card-body">
+										<div class="tab-content mt-3">
+											<div class="tab-pane fade active show" id="tab-order" role="tabpanel">
+												<div class="col">
+													<div class="card" id="table-card">
+														
 													</div>
 												</div>
 											</div>
 										</div>
-									</div>
+									</div> #}
 								</div>
 							</div>
 						</div>
@@ -147,6 +148,42 @@
 			</div>
 		</div>
 	</div>
+	<style>
+		/* Ajoutez ce style pour garantir le responsive */
+		@media (max-width: 768px) {
+			#category-container, 
+			.col-md-9 {
+				width: 68%;
+				float: none;
+			}
+			.col-md-3
+ 			{
+				width: 32% !important;
+				float: none;
+			}
+			#category-card {
+				margin-bottom: 20px;
+			}
+			.card-body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+			}
+
+			h5 {
+    font-size: 1.0rem;
+    text-align: center;
+			}
+			li.list-group-item.list-group-item-action {
+    		font-size: 11px;
+   			 font-weight: 600;
+			}
+			.table-responsive {
+    font-size: 8px;
+    width: 100% !important;
+}
+		}
+	</style>
 	<script>
 		var updatePanierUrl = '{{ path("update_panier") }}';
 		document.addEventListener('DOMContentLoaded', function () {
@@ -325,7 +362,6 @@
 
 					row.innerHTML = `
 					<td><strong><span style="display:none"> ${article.code}</span> ${article.libelle}</strong></td>
-					<td class="text-center"  style="font-size: 17px;font-weight: bold;">${article.qteDispo}</td>
 					<td class="text-center">
 						<div class="quantity-container">
 							<button class="btn btn-danger minus-btn custom-minus-btn d-flex align-items-center justify-content-center" data-index="${index}" data-code='${article.code}' ><i class="fa fa-minus-square"></i></button>

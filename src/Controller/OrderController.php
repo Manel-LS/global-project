@@ -123,7 +123,7 @@ public function getArticles(string $categoryCode, string $userCode, PricingServi
 
             if (isset($artFourchetteCodes[$article->getCode()])) {
                 $qteArt = 1;
-                $discount = $pricingService->calculateDiscount($article->getCode(), $qteArt, $tarif, $remise);
+                $discount = $pricingService->calculateDiscount($article->getCode(), $qteArt, $tarif);
                // $remise = $discount;
             }
 

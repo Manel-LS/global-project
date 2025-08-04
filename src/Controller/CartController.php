@@ -538,19 +538,19 @@ class CartController extends AbstractController
                     $ligneWeb->setLibtrs($item['clientname']);
                     if (isset($item['gift']) && $item['gift'] == 1) {
                         $ligneWeb->setQteart($item['quantityGift']);
-                        $ligneWeb->setQtePromo(0);
+                        // $ligneWeb->setQtePromo(0);
                         $ligneWeb->setPuttc(0);
                         $ligneWeb->setType("C");
                     }
                     elseif (isset($item['exchange']) && $item['exchange'] == 1) {
                         $ligneWeb->setQteart($item['quantityExchange']);
-                        $ligneWeb->setQtePromo(0);
+                        // $ligneWeb->setQtePromo(0);
                         $ligneWeb->setPuht($item['price']);
                         $ligneWeb->setType("R");
                     } else {
                         $ligneWeb->setQteart($item['quantity']);
                         $ligneWeb->setQtegratuit($item['nbrGratuit']);
-                        $ligneWeb->setQtePromo($item['quantityPromo']);
+                        // $ligneWeb->setQtePromo($item['quantityPromo']);
                         $ligneWeb->setPuht($item['price']);
                         $ligneWeb->setType("V");
                     }
